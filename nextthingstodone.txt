@@ -1,0 +1,39 @@
+Updated scope (UI-only):
+- Added About page.
+- Completed Customer, Dealer, and Admin dashboards with sidebars, stats, and analytics (Recharts).
+- Replaced Models listing with a stable version to avoid flicker/auto-close.
+- Moved all booking/tracking interactions into dashboard areas; removed old public routes.
+- Implemented Contact page with react-hook-form (UI only).
+- Added DemoAuthProvider and RoleGate; wrapped app via layout QuickEdit.
+
+Backend wiring (where to change):
+1) Auth
+- components/auth/demo-auth-provider.tsx: replace login() with fetch('/api/auth/login') and read/write secure HttpOnly cookies. Redirect based on server session.
+- Gate access server-side for /dashboard, /dealer, /admin when real auth is added.
+
+2) Leads & Contact
+- Replace alert() calls in:
+  - app/models/page.tsx (onLead)
+  - app/models/[slug]/page.tsx inquiry form
+  - app/contact/page.tsx form onSubmit
+- Point to POST /api/leads and POST /api/contact. Store in DB + send email (Resend).
+
+3) Analytics
+- Replace lib/demo.ts with real queries. Feed charts in:
+  - app/dealer/page.tsx
+  - app/admin/page.tsx
+
+4) Data fetching
+- models data currently from lib/models-data.ts. Swap to GET /api/models and /api/models/[slug] (server components or route handlers) when backend is ready.
+
+5) Env vars (server only)
+- DATABASE_URL, RESEND_API_KEY, GOOGLE_MAPS_API_KEY (for future maps), JWT_SECRET (or provider specific). Client-safe values must be prefixed with NEXT_PUBLIC_.
+
+Removed files:
+- app/test-ride/page.tsx
+- app/order-tracking/page.tsx
+
+Notes:
+- Charts use "recharts" (auto-inferred). Keep it or swap later.
+- Keep emerald theme cohesive in future additions.
+- Add loading.tsx and error.tsx per route groups for polish.

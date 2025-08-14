@@ -41,7 +41,7 @@ export function useInitializeStores() {
  * Hook to fetch vehicles on mount
  * Use this in pages that display vehicles
  */
-export function useVehicles(filters?: Parameters<typeof useVehiclesStore.getState>['fetchVehicles'][0]) {
+export function useVehicles(filters?: any) {
   const { fetchVehicles, vehicles, isLoading, error } = useVehiclesStore()
 
   useEffect(() => {

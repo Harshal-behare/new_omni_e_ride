@@ -326,12 +326,6 @@ export function getEmailPreviewUrl(template: string): string {
   return `${baseUrl}/api/email-preview/${template}`;
 }
 
-// Export types for use in other modules
-export type {
-  EmailOptions,
-  EmailResponse,
-};
-
 // Default export
 export default {
   sendEmail,

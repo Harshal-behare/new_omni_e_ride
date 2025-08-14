@@ -256,7 +256,7 @@ export function logRequest(request: NextRequest) {
     requestId,
     method: request.method,
     path: request.nextUrl.pathname,
-    ip: request.ip || request.headers.get('x-forwarded-for') || 'unknown',
+    ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
     userAgent: request.headers.get('user-agent') || 'unknown',
   })
   

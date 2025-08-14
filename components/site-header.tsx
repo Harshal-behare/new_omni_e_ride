@@ -22,7 +22,7 @@ const navItems = [
 export default function SiteHeader() {
   const pathname = usePathname()
   const router = useRouter()
-  const { user, signOut } = useAuthStore()
+  const { user, profile, signOut } = useAuthStore()
   
   const handleLogout = async () => {
     await signOut()
@@ -74,12 +74,12 @@ export default function SiteHeader() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>
-                    <div className="text-sm font-semibold">{user.name || 'User'}</div>
+                    <div className="text-sm font-semibold">{profile?.name || 'User'}</div>
                     <div className="text-xs text-gray-500">{user.email}</div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href={user.role === 'dealer' ? '/dealer' : user.role === 'admin' ? '/admin' : '/dashboard'}>Dashboard</Link>
+                    <Link href={profile?.role === 'dealer' ? '/dealer' : profile?.role === 'admin' ? '/admin' : '/dashboard'}>Dashboard</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild><Link href="/profile">Profile</Link></DropdownMenuItem>
                   <DropdownMenuItem asChild><Link href="/settings">Settings</Link></DropdownMenuItem>
@@ -133,7 +133,7 @@ export default function SiteHeader() {
                   <div className="grid gap-2">
                     {user ? (
                       <>
-                        <Link href={user.role === 'dealer' ? '/dealer' : user.role === 'admin' ? '/admin' : '/dashboard'} className="rounded-lg px-3 py-2 hover:bg-gray-100">Dashboard</Link>
+                        <Link href={profile?.role === 'dealer' ? '/dealer' : profile?.role === 'admin' ? '/admin' : '/dashboard'} className="rounded-lg px-3 py-2 hover:bg-gray-100">Dashboard</Link>
                         <button onClick={handleLogout} className="rounded-lg px-3 py-2 text-left hover:bg-gray-100">Log out</button>
                       </>
                     ) : (

@@ -20,10 +20,17 @@ export async function POST(request: NextRequest) {
     
     // Parse request body
     const body = await request.json()
-    const { vehicle_id, dealer_id, scheduled_date, scheduled_time, notes } = body
+    const { vehicle_id, dealer_id, preferred_date, preferred_time, notes, name, email, phone, city, address } = body
+    
+    // Get user profile for default values
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name, email, phone')
+      .eq('id', user.id)
+      .single()
     
     // Validate required fields
-    if (!vehicle_id || !scheduled_date || !scheduled_time) {
+    if (!vehicle_id || !preferred_date || !preferred_time) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -34,8 +41,13 @@ export async function POST(request: NextRequest) {
     const testRide = await createTestRide(user.id, {
       vehicle_id,
       dealer_id,
-      scheduled_date,
-      scheduled_time,
+      preferred_date,
+      preferred_time,
+      name: name || profile?.name || '',
+      email: email || profile?.email || user.email || '',
+      phone: phone || profile?.phone || '',
+      city: city || '',
+      address,
       notes
     })
     
@@ -44,13 +56,6 @@ export async function POST(request: NextRequest) {
       .from('vehicles')
       .select('name, price, images')
       .eq('id', vehicle_id)
-      .single()
-    
-    // Get user profile
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('name, email')
-      .eq('id', user.id)
       .single()
     
     // Prepare payment configuration for frontend

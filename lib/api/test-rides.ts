@@ -158,6 +158,35 @@ export async function confirmTestRide(id: string): Promise<TestRide> {
   return updateTestRideStatus(id, 'confirmed')
 }
 
+// Update test ride payment information
+export async function updateTestRidePayment(
+  id: string,
+  paymentId: string,
+  transactionId: string
+): Promise<TestRide> {
+  const supabase = await createClient()
+  
+  const { data, error } = await supabase
+    .from('test_rides')
+    .update({
+      payment_status: 'paid',
+      payment_id: paymentId,
+      transaction_id: transactionId,
+      status: 'confirmed',
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    console.error('Error updating test ride payment:', error)
+    throw new Error('Failed to update test ride payment')
+  }
+
+  return data
+}
+
 // Get available time slots for a specific date and dealer
 export async function getAvailableSlots(
   date: string,

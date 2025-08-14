@@ -40,7 +40,7 @@ export default function FeaturedModelsCarousel() {
 
   async function fetchVehicles() {
     try {
-      const response = await fetch('/api/vehicles?limit=6')
+      const response = await fetch('/api/vehicles?limit=8')
       if (response.ok) {
         const data = await response.json()
         setVehicles(data)

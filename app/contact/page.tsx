@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { OmniButton } from '@/components/ui/omni-button'
-import { Phone, Mail, MapPin, Clock, CheckCircle2 } from 'lucide-react'
+import { Phone, Mail, MapPin, Clock, CheckCircle2, AlertCircle } from 'lucide-react'
+import { submitContactForm, ContactFormData } from '@/lib/api/leads'
 
 type FormVals = {
   name: string
@@ -14,10 +16,33 @@ type FormVals = {
 }
 
 export default function ContactPage() {
-  const { register, handleSubmit, reset } = useForm<FormVals>({ defaultValues: { priority: 'normal' } })
-  function onSubmit(v: FormVals) {
-    alert('Message sent (demo). Replace with POST /api/contact')
-    reset()
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormVals>({ defaultValues: { priority: 'normal' } })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+  
+  async function onSubmit(v: FormVals) {
+    setIsSubmitting(true)
+    setSubmitStatus(null)
+    
+    try {
+      const result = await submitContactForm(v as ContactFormData)
+      setSubmitStatus({
+        type: 'success',
+        message: 'Thank you for contacting us! We will get back to you soon.'
+      })
+      reset()
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => setSubmitStatus(null), 5000)
+    } catch (error) {
+      console.error('Contact form error:', error)
+      setSubmitStatus({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Failed to submit form. Please try again.'
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
@@ -60,6 +85,22 @@ export default function ContactPage() {
                 </Field>
               </div>
               <Field label="Message"><textarea rows={6} className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400" {...register('message', { required: true })} /></Field>
+              
+              {submitStatus && (
+                <div className={`flex items-center gap-2 rounded-lg p-3 ${
+                  submitStatus.type === 'success' 
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}>
+                  {submitStatus.type === 'success' ? (
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+                  ) : (
+                    <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                  )}
+                  <span className="text-sm">{submitStatus.message}</span>
+                </div>
+              )}
+              
               <div className="flex items-center justify-between">
                 <label className="inline-flex items-center gap-2 text-sm">
                   Priority:
@@ -68,7 +109,9 @@ export default function ContactPage() {
                     <option value="urgent">Urgent</option>
                   </select>
                 </label>
-                <OmniButton type="submit">Send Message</OmniButton>
+                <OmniButton type="submit" loading={isSubmitting} disabled={isSubmitting}>
+                  {isSubmitting ? 'Sending...' : 'Send Message'}
+                </OmniButton>
               </div>
             </form>
           </div>

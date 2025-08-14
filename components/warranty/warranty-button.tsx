@@ -184,4 +184,4 @@ export const WarrantyButton = React.forwardRef<HTMLButtonElement, WarrantyButton
       )}
     </>
   )
-}
+})

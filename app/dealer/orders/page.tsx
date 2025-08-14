@@ -1,29 +1,50 @@
 'use client'
 
 import * as React from 'react'
-import { addOrder, Order } from '@/lib/stores/orders'
+import { useOrdersStore } from '@/lib/stores/orders'
+import type { Order } from '@/lib/database.types'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { OmniButton } from '@/components/ui/omni-button'
 
 export default function DealerOrdersPage() {
+  const addOrder = useOrdersStore((state) => state.addOrder)
   const [form, setForm] = React.useState({
     customerEmail: '',
     customerName: '',
     modelName: 'Urban Pro',
     value: 125000,
-    status: 'Confirmed' as Order['status'],
+    status: 'confirmed' as Order['status'],
   })
 
-  function create() {
+  async function create() {
     if (!form.customerEmail) return alert('Customer email required')
-    addOrder({
-      customerEmail: form.customerEmail,
-      customerName: form.customerName || form.customerEmail,
-      modelName: form.modelName,
-      value: Number(form.value),
+    const result = await addOrder({
+      user_id: '', // This should be filled with actual user ID
+      order_number: `ORD${Date.now()}`,
+      total_amount: form.value,
+      final_amount: form.value,
       status: form.status,
+      shipping_address: {
+        name: form.customerName || form.customerEmail,
+        email: form.customerEmail,
+        phone: '',
+        address: '',
+        city: '',
+        state: '',
+        pincode: ''
+      },
     })
-    alert('Order created. It will reflect on the customer dashboard.')
+    if (result.success) {
+      alert('Order created. It will reflect on the customer dashboard.')
+      // Reset form
+      setForm({
+        customerEmail: '',
+        customerName: '',
+        modelName: 'Urban Pro',
+        value: 125000,
+        status: 'confirmed' as Order['status'],
+      })
+    }
   }
 
   return (
@@ -41,10 +62,10 @@ export default function DealerOrdersPage() {
             <Field label="Amount (₹)"><input type="number" className="w-full rounded-lg border px-3 py-2" value={form.value} onChange={(e) => setForm({ ...form, value: Number(e.target.value) })} /></Field>
             <Field label="Status">
               <select className="w-full rounded-lg border px-3 py-2" value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as Order['status'] })}>
-                <option>Confirmed</option>
-                <option>In Production</option>
-                <option>Shipped</option>
-                <option>Delivered</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="processing">In Production</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
               </select>
             </Field>
           </div>

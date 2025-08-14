@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
+import { submitInquiry } from '@/lib/api/leads'
+import { AlertCircle, CheckCircle2 } from 'lucide-react'
 
 export function WarrantyRegistrationForm({
   dealerName = 'Green Wheels Bengaluru',
@@ -28,6 +30,7 @@ export function WarrantyRegistrationForm({
   const [sig, setSig] = React.useState<string>('')
   const [agree, setAgree] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
+  const [submitStatus, setSubmitStatus] = React.useState<{ type: 'success' | 'error', message: string } | null>(null)
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -39,32 +42,72 @@ export function WarrantyRegistrationForm({
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    if (!agree) return alert('Please accept the warranty terms.')
+    setSubmitStatus(null)
+    
+    if (!agree) {
+      setSubmitStatus({ type: 'error', message: 'Please accept the warranty terms.' })
+      return
+    }
+    
     const fd = new FormData(e.currentTarget)
     const customerName = String(fd.get('customerName') || '')
     const email = String(fd.get('customerEmail') || '')
     const phone = String(fd.get('phone') || '')
     const vin = String(fd.get('vin') || '')
     const purchaseDate = String(fd.get('purchaseDate') || '')
-    if (!customerName || !email || !vin || !purchaseDate) return alert('Please fill all required fields.')
+    
+    if (!customerName || !email || !vin || !purchaseDate) {
+      setSubmitStatus({ type: 'error', message: 'Please fill all required fields.' })
+      return
+    }
+    
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 500))
-    const rec = submitWarranty({
-      customerEmail: email,
-      customerName,
-      phone,
-      modelId,
-      modelName: model.name,
-      vin,
-      purchaseDate,
-      periodYears,
-      dealerName,
-      invoiceImage: invoice,
-      signatureDataUrl: sig,
-    })
-    setLoading(false)
-    onSubmitted?.(rec.id)
-    alert('Warranty submitted for admin review.')
+    
+    try {
+      // Store warranty locally
+      const rec = submitWarranty({
+        customerEmail: email,
+        customerName,
+        phone,
+        modelId,
+        modelName: model.name,
+        vin,
+        purchaseDate,
+        periodYears,
+        dealerName,
+        invoiceImage: invoice,
+        signatureDataUrl: sig,
+      })
+      
+      // Also create a lead for warranty inquiry
+      await submitInquiry({
+        name: customerName,
+        email,
+        phone: phone || '',
+        subject: `Warranty Registration - ${model.name}`,
+        message: `Customer has submitted warranty registration for ${model.name}. VIN: ${vin}, Purchase Date: ${purchaseDate}, Warranty Period: ${periodYears} year(s).`,
+        priority: 'normal',
+        vehicle_id: modelId,
+      })
+      
+      setSubmitStatus({ 
+        type: 'success', 
+        message: 'Warranty registration submitted successfully! We will review and confirm within 24 hours.' 
+      })
+      
+      onSubmitted?.(rec.id)
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => setSubmitStatus(null), 5000)
+    } catch (error) {
+      console.error('Warranty submission error:', error)
+      setSubmitStatus({ 
+        type: 'error', 
+        message: error instanceof Error ? error.message : 'Failed to submit warranty. Please try again.' 
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -109,8 +152,25 @@ export function WarrantyRegistrationForm({
         <span>I accept the detailed warranty terms and conditions.</span>
       </label>
 
+      {submitStatus && (
+        <div className={`flex items-center gap-2 rounded-lg p-3 ${
+          submitStatus.type === 'success' 
+            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+            : 'bg-red-50 text-red-800 border border-red-200'
+        }`}>
+          {submitStatus.type === 'success' ? (
+            <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+          ) : (
+            <AlertCircle className="h-5 w-5 flex-shrink-0" />
+          )}
+          <span className="text-sm">{submitStatus.message}</span>
+        </div>
+      )}
+
       <div className="flex gap-2">
-        <OmniButton type="submit" loading={loading}>Submit Warranty</OmniButton>
+        <OmniButton type="submit" loading={loading} disabled={loading}>
+          {loading ? 'Submitting...' : 'Submit Warranty'}
+        </OmniButton>
       </div>
       <p className="text-xs text-gray-600">Automatic warranty period calculation is applied based on selected period and purchase date. Admin will verify documents and approve.</p>
     </form>

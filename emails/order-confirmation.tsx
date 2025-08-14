@@ -184,7 +184,7 @@ export const OrderConfirmationEmail: React.FC<OrderConfirmationEmailProps> = ({
   );
 };
 
-OrderConfirmationEmail.PreviewProps = {
+export const OrderConfirmationEmailPreviewProps = {
   customerName: 'John Doe',
   orderNumber: 'ORD-2024-001234',
   orderDate: 'January 15, 2024',

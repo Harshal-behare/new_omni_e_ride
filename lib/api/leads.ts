@@ -1,5 +1,8 @@
 import { Lead, LeadInsert, LeadUpdate } from '@/lib/database.types'
 
+// Re-export types for easier imports
+export type { Lead, LeadInsert, LeadUpdate }
+
 export interface LeadFilters {
   status?: Lead['status'][]
   priority?: Lead['priority'][]

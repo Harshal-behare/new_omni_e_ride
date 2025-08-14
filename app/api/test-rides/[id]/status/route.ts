@@ -3,9 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { updateTestRideStatus, getTestRideById } from '@/lib/api/test-rides'
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 // PUT /api/test-rides/[id]/status - Update test ride status
@@ -23,7 +23,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       )
     }
     
-    const testRideId = params.id
+    const resolvedParams = await params
+    const testRideId = resolvedParams.id
     
     // Parse request body
     const body = await request.json()

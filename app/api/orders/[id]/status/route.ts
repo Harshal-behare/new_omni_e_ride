@@ -4,10 +4,11 @@ import type { Order } from '@/lib/database.types'
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const orderId = params.id
+    const resolvedParams = await params
+    const orderId = resolvedParams.id
     
     if (!orderId) {
       return NextResponse.json(
@@ -154,15 +155,24 @@ export async function PUT(
     
     // If order is cancelled and payment was made, update stock
     if (body.status === 'cancelled' && order.payment_status === 'paid') {
-      const { error: stockError } = await supabase
+      // First get current stock
+      const { data: vehicle } = await supabase
         .from('vehicles')
-        .update({
-          stock_quantity: supabase.raw('stock_quantity + ?', [order.quantity])
-        })
+        .select('stock_quantity')
         .eq('id', order.vehicle_id)
+        .single()
       
-      if (stockError) {
-        console.error('Failed to restore stock:', stockError)
+      if (vehicle) {
+        const { error: stockError } = await supabase
+          .from('vehicles')
+          .update({
+            stock_quantity: vehicle.stock_quantity + order.quantity
+          })
+          .eq('id', order.vehicle_id)
+        
+        if (stockError) {
+          console.error('Failed to restore stock:', stockError)
+        }
       }
       
       // TODO: Initiate refund process through Razorpay

@@ -96,7 +96,7 @@ export const WelcomeEmail: React.FC<WelcomeEmailProps> = ({
   );
 };
 
-WelcomeEmail.PreviewProps = {
+export const WelcomeEmailPreviewProps = {
   firstName: 'John',
   email: 'john.doe@example.com',
   verificationUrl: 'https://omni-e-ride.com/verify?token=abc123',

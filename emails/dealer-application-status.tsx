@@ -239,7 +239,7 @@ export const DealerApplicationStatusEmail: React.FC<DealerApplicationStatusEmail
   );
 };
 
-DealerApplicationStatusEmail.PreviewProps = {
+export const DealerApplicationStatusEmailPreviewProps: DealerApplicationStatusEmailProps = {
   applicantName: 'Rajesh Kumar',
   businessName: 'Kumar Auto Sales',
   applicationId: 'DA-2024-001234',
@@ -253,7 +253,7 @@ DealerApplicationStatusEmail.PreviewProps = {
     'Complete the online training modules',
     'Place your initial inventory order',
   ],
-} as DealerApplicationStatusEmailProps;
+};
 
 export default DealerApplicationStatusEmail;
 

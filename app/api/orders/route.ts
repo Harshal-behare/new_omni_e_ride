@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
           vehicle_name: vehicle.name,
           user_id: user.id
         },
-        payment_capture: 1
+        payment_capture: true
       })
       
       // Update order with Razorpay order ID
@@ -320,15 +320,24 @@ export async function PUT(request: NextRequest) {
     }
     
     // Update vehicle stock
-    const { error: stockError } = await supabase
+    // First get current stock
+    const { data: vehicle } = await supabase
       .from('vehicles')
-      .update({
-        stock_quantity: supabase.raw('stock_quantity - ?', [order.quantity])
-      })
+      .select('stock_quantity')
       .eq('id', order.vehicle_id)
+      .single()
     
-    if (stockError) {
-      console.error('Failed to update stock:', stockError)
+    if (vehicle) {
+      const { error: stockError } = await supabase
+        .from('vehicles')
+        .update({
+          stock_quantity: Math.max(0, vehicle.stock_quantity - order.quantity)
+        })
+        .eq('id', order.vehicle_id)
+      
+      if (stockError) {
+        console.error('Failed to update stock:', stockError)
+      }
     }
     
     return NextResponse.json({

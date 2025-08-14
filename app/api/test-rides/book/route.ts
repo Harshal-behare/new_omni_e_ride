@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
         type: 'test_ride',
         testRideId: booking.id,
         userId: user.id,
-        userEmail: user.email,
+        userEmail: user.email || '',
         vehicleId: vehicleId,
         vehicleName: vehicle.name,
         bookingDate: preferredDate,
@@ -177,7 +177,9 @@ export async function POST(request: NextRequest) {
       })
     
     // Send booking confirmation email (async - don't wait)
-    sendBookingConfirmationEmail(user.email, booking, vehicle).catch(console.error)
+    if (user.email) {
+      sendBookingConfirmationEmail(user.email, booking, vehicle).catch(console.error)
+    }
     
     return NextResponse.json({
       success: true,

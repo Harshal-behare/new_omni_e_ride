@@ -169,7 +169,7 @@ export const OrderStatusUpdateEmail: React.FC<OrderStatusUpdateEmailProps> = ({
   );
 };
 
-OrderStatusUpdateEmail.PreviewProps = {
+export const OrderStatusUpdateEmailPreviewProps = {
   customerName: 'John Doe',
   orderNumber: 'ORD-2024-001234',
   status: 'shipped',

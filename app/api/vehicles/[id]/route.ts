@@ -3,11 +3,12 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const { id } = params
+    const resolvedParams = await params
+    const { id } = resolvedParams
     
     if (!id) {
       return NextResponse.json(
@@ -88,11 +89,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
-    const { id } = params
+    const resolvedParams = await params
+    const { id } = resolvedParams
     
     if (!id) {
       return NextResponse.json(

@@ -284,7 +284,7 @@ export const LeadAssignmentEmail: React.FC<LeadAssignmentEmailProps> = ({
   );
 };
 
-LeadAssignmentEmail.PreviewProps = {
+export const LeadAssignmentEmailPreviewProps = {
   dealerName: 'Omni E-Ride Mumbai Central',
   dealerContactName: 'Rajesh',
   lead: {

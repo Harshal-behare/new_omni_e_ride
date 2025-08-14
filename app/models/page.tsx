@@ -114,8 +114,12 @@ export default function ModelsListingPage() {
                     </div>
 
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <OmniButton asChild><Link href={`/models/${m.slug}`}>View Details</Link></OmniButton>
-                      <OmniButton variant="outline" asChild><Link href="/dealers">Find Dealer</Link></OmniButton>
+                      <Link href={`/models/${m.slug}`}>
+                        <OmniButton>View Details</OmniButton>
+                      </Link>
+                      <Link href="/dealers">
+                        <OmniButton variant="outline">Find Dealer</OmniButton>
+                      </Link>
                     </div>
                   </div>
                 </article>

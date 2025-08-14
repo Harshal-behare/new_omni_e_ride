@@ -197,7 +197,7 @@ export const TestRideConfirmationEmail: React.FC<TestRideConfirmationEmailProps>
   );
 };
 
-TestRideConfirmationEmail.PreviewProps = {
+export const TestRideConfirmationEmailPreviewProps = {
   customerName: 'John Doe',
   bookingId: 'TR-2024-001234',
   vehicleName: 'Omni E-Bike Pro',

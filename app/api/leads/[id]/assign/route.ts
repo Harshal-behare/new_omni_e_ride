@@ -34,7 +34,7 @@ async function sendAssignmentNotification(lead: any, dealer: any) {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -89,10 +89,11 @@ export async function PUT(
     }
 
     // Get the current lead
+    const resolvedParams = await params
     const { data: currentLead } = await supabase
       .from('leads')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .single()
 
     if (!currentLead) {
@@ -122,7 +123,7 @@ export async function PUT(
     const { data: updatedLead, error: updateError } = await supabase
       .from('leads')
       .update(updateData)
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .select('*, dealers(name, email)')
       .single()
 
@@ -139,7 +140,7 @@ export async function PUT(
 
     // Log the assignment activity
     const activityLog = {
-      lead_id: params.id,
+      lead_id: resolvedParams.id,
       action: 'assigned',
       performed_by: user.id,
       details: {

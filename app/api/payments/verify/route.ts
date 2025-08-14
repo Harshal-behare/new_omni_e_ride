@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
         user_id: user.id,
         order_id: razorpay_order_id,
         payment_id: razorpay_payment_id,
-        amount: payment.amount / 100, // Convert from paise to rupees
+        amount: Number(payment.amount) / 100, // Convert from paise to rupees
         currency: payment.currency,
         status: payment.status,
         method: payment.method,
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
       message: 'Payment verified successfully',
       paymentId: razorpay_payment_id,
       orderId: razorpay_order_id,
-      amount: payment.amount / 100,
+      amount: Number(payment.amount) / 100,
       status: payment.status
     })
     
@@ -170,7 +170,7 @@ async function processTestRidePayment(
         .update({
           payment_status: 'paid',
           payment_id: payment.id,
-          deposit_amount: payment.amount / 100,
+          deposit_amount: Number(payment.amount) / 100,
           updated_at: new Date().toISOString()
         })
         .eq('id', metadata.testRideId)
@@ -196,7 +196,7 @@ async function processVehicleOrderPayment(
         .update({
           payment_status: 'paid',
           payment_id: payment.id,
-          paid_amount: payment.amount / 100,
+          paid_amount: Number(payment.amount) / 100,
           updated_at: new Date().toISOString()
         })
         .eq('id', metadata.orderId)

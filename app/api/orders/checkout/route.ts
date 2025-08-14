@@ -198,10 +198,10 @@ export async function POST(request: NextRequest) {
         type: 'vehicle_order',
         orderId: order.id,
         userId: user.id,
-        userEmail: user.email,
+        userEmail: user.email || '',
         vehicleId: vehicleId,
         vehicleName: vehicle.name,
-        quantity: quantity,
+        quantity: quantity.toString(),
         color: color,
         paymentType: paymentType || 'full',
         contactNumber: contactNumber

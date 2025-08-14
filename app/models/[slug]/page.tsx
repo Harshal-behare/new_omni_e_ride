@@ -1,5 +1,6 @@
 'use client'
 
+import { use } from 'react'
 import { MODELS } from '@/lib/models-data'
 import Link from 'next/link'
 import { OmniButton } from '@/components/ui/omni-button'
@@ -9,8 +10,9 @@ import ColorSwatches from '@/components/products/color-swatches'
 import FinanceTools from '@/components/calculators/finance-tools'
 import WarrantyInfo from '@/components/warranty/warranty-info'
 
-export default function ProductDetailPage({ params }: { params: { slug: string } }) {
-  const model = MODELS.find((m) => m.slug === params.slug)
+export default function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const resolvedParams = use(params)
+  const model = MODELS.find((m) => m.slug === resolvedParams.slug)
   if (!model) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-10">

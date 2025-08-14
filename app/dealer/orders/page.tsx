@@ -11,6 +11,7 @@ export default function DealerOrdersPage() {
   const [form, setForm] = React.useState({
     customerEmail: '',
     customerName: '',
+    vehicleId: 'test-vehicle-id', // This needs to be set based on vehicle selection
     modelName: 'Urban Pro',
     value: 125000,
     status: 'confirmed' as Order['status'],
@@ -18,20 +19,37 @@ export default function DealerOrdersPage() {
 
   async function create() {
     if (!form.customerEmail) return alert('Customer email required')
+    if (!form.vehicleId) {
+      // For now, hardcode a vehicle ID - in production this should be selected
+      alert('Vehicle selection is required')
+      return
+    }
+    
     const result = await addOrder({
-      user_id: '', // This should be filled with actual user ID
-      order_number: `ORD${Date.now()}`,
+      user_id: 'placeholder-user-id', // This should be filled with actual user ID from customer lookup
+      vehicle_id: form.vehicleId || 'placeholder-vehicle-id', // This should be from vehicle selection
+      unit_price: form.value,
       total_amount: form.value,
-      final_amount: form.value,
       status: form.status,
       shipping_address: {
-        name: form.customerName || form.customerEmail,
+        full_name: form.customerName || form.customerEmail,
         email: form.customerEmail,
-        phone: '',
-        address: '',
-        city: '',
-        state: '',
-        pincode: ''
+        phone: '9999999999', // Placeholder - should be from form
+        address_line1: 'Placeholder Address', // Should be from form
+        city: 'Mumbai', // Should be from form
+        state: 'Maharashtra', // Should be from form
+        pincode: '400001', // Should be from form
+        country: 'India'
+      },
+      billing_address: {
+        full_name: form.customerName || form.customerEmail,
+        email: form.customerEmail,
+        phone: '9999999999', // Placeholder - should be from form
+        address_line1: 'Placeholder Address', // Should be from form
+        city: 'Mumbai', // Should be from form
+        state: 'Maharashtra', // Should be from form
+        pincode: '400001', // Should be from form
+        country: 'India'
       },
     })
     if (result.success) {
@@ -40,6 +58,7 @@ export default function DealerOrdersPage() {
       setForm({
         customerEmail: '',
         customerName: '',
+        vehicleId: 'test-vehicle-id',
         modelName: 'Urban Pro',
         value: 125000,
         status: 'confirmed' as Order['status'],

@@ -13,10 +13,10 @@ export interface TestRideWithDetails extends TestRide {
   }
   dealer?: {
     id: string
-    name: string
-    address: string
+    business_name: string
+    business_address: string
     city: string
-    phone: string
+    business_phone: string
   }
   user?: {
     id: string
@@ -34,8 +34,13 @@ export interface AvailableSlot {
 export interface CreateTestRideData {
   vehicle_id: string
   dealer_id?: string
-  scheduled_date: string
-  scheduled_time: string
+  preferred_date: string
+  preferred_time: string
+  name: string
+  email: string
+  phone: string
+  city: string
+  address?: string
   notes?: string
 }
 
@@ -48,11 +53,11 @@ export async function getUserTestRides(userId: string): Promise<TestRideWithDeta
     .select(`
       *,
       vehicle:vehicles(id, name, slug, price, images),
-      dealer:dealers(id, name, address, city, phone)
+      dealer:dealers(id, business_name, business_address, city, business_phone)
     `)
     .eq('user_id', userId)
-    .order('scheduled_date', { ascending: false })
-    .order('scheduled_time', { ascending: false })
+    .order('preferred_date', { ascending: false })
+    .order('preferred_time', { ascending: false })
 
   if (error) {
     console.error('Error fetching user test rides:', error)
@@ -71,7 +76,7 @@ export async function getTestRideById(id: string): Promise<TestRideWithDetails |
     .select(`
       *,
       vehicle:vehicles(id, name, slug, price, images),
-      dealer:dealers(id, name, address, city, phone),
+      dealer:dealers(id, business_name, business_address, city, business_phone),
       user:profiles(id, name, email)
     `)
     .eq('id', id)
@@ -89,35 +94,19 @@ export async function getTestRideById(id: string): Promise<TestRideWithDetails |
 export async function createTestRide(userId: string, data: CreateTestRideData): Promise<TestRide> {
   const supabase = await createClient()
   
-  // Generate a unique ID for the test ride
-  const testRideId = `tr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-  
-  // Create Razorpay order
-  const razorpay = getRazorpayInstance()
-  const order = await razorpay.orders.create({
-    amount: formatAmountForRazorpay(TEST_RIDE_DEPOSIT),
-    currency: CURRENCY,
-    receipt: testRideId,
-    notes: {
-      type: 'test_ride',
-      test_ride_id: testRideId,
-      user_id: userId,
-      vehicle_id: data.vehicle_id,
-    }
-  })
-  
   // Create test ride record
-  const testRideData: TestRideInsert = {
-    id: testRideId,
+  const testRideData: any = {
     user_id: userId,
     vehicle_id: data.vehicle_id,
     dealer_id: data.dealer_id || null,
-    scheduled_date: data.scheduled_date,
-    scheduled_time: data.scheduled_time,
+    preferred_date: data.preferred_date,
+    preferred_time: data.preferred_time,
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    city: data.city,
+    address: data.address || null,
     status: 'pending',
-    payment_status: 'pending',
-    payment_amount: TEST_RIDE_DEPOSIT,
-    razorpay_order_id: order.id,
     notes: data.notes || null,
   }
   
@@ -164,33 +153,9 @@ export async function updateTestRideStatus(
   return data
 }
 
-// Update payment status after successful payment
-export async function updateTestRidePayment(
-  id: string,
-  paymentId: string,
-  razorpayPaymentId: string
-): Promise<TestRide> {
-  const supabase = await createClient()
-  
-  const { data, error } = await supabase
-    .from('test_rides')
-    .update({
-      payment_status: 'paid',
-      payment_id: paymentId,
-      razorpay_payment_id: razorpayPaymentId,
-      status: 'confirmed',
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', id)
-    .select()
-    .single()
-
-  if (error) {
-    console.error('Error updating test ride payment:', error)
-    throw new Error('Failed to update payment status')
-  }
-
-  return data
+// Update test ride to confirmed after verification
+export async function confirmTestRide(id: string): Promise<TestRide> {
+  return updateTestRideStatus(id, 'confirmed')
 }
 
 // Get available time slots for a specific date and dealer
@@ -209,8 +174,8 @@ export async function getAvailableSlots(
   // Get booked slots for the date
   let query = supabase
     .from('test_rides')
-    .select('scheduled_time')
-    .eq('scheduled_date', date)
+    .select('preferred_time')
+    .eq('preferred_date', date)
     .in('status', ['pending', 'confirmed'])
   
   if (dealerId) {
@@ -224,7 +189,7 @@ export async function getAvailableSlots(
     return allSlots.map(time => ({ date, time, available: true }))
   }
   
-  const bookedTimes = new Set(bookedSlots?.map(slot => slot.scheduled_time) || [])
+  const bookedTimes = new Set(bookedSlots?.map(slot => slot.preferred_time) || [])
   
   // Mark slots as available or unavailable
   return allSlots.map(time => ({
@@ -251,7 +216,7 @@ export async function cancelTestRide(id: string, userId: string): Promise<TestRi
   }
   
   // Check if cancellation is allowed (e.g., at least 24 hours before)
-  const scheduledDateTime = new Date(`${testRide.scheduled_date}T${testRide.scheduled_time}`)
+  const scheduledDateTime = new Date(`${testRide.preferred_date}T${testRide.preferred_time}`)
   const now = new Date()
   const hoursUntilRide = (scheduledDateTime.getTime() - now.getTime()) / (1000 * 60 * 60)
   
@@ -275,11 +240,7 @@ export async function cancelTestRide(id: string, userId: string): Promise<TestRi
     throw new Error('Failed to cancel test ride')
   }
   
-  // TODO: Initiate refund if payment was made
-  if (testRide.payment_status === 'paid' && testRide.razorpay_payment_id) {
-    // This would typically trigger a refund process
-    console.log('Refund should be initiated for payment:', testRide.razorpay_payment_id)
-  }
+  // TODO: Send cancellation notification email
   
   return data
 }
@@ -300,7 +261,7 @@ export async function getAllTestRides(
     .select(`
       *,
       vehicle:vehicles(id, name, slug, price, images),
-      dealer:dealers(id, name, address, city, phone),
+      dealer:dealers(id, business_name, business_address, city, business_phone),
       user:profiles(id, name, email)
     `)
   
@@ -313,16 +274,16 @@ export async function getAllTestRides(
   }
   
   if (filters?.from_date) {
-    query = query.gte('scheduled_date', filters.from_date)
+    query = query.gte('preferred_date', filters.from_date)
   }
   
   if (filters?.to_date) {
-    query = query.lte('scheduled_date', filters.to_date)
+    query = query.lte('preferred_date', filters.to_date)
   }
   
   const { data, error } = await query
-    .order('scheduled_date', { ascending: true })
-    .order('scheduled_time', { ascending: true })
+    .order('preferred_date', { ascending: true })
+    .order('preferred_time', { ascending: true })
   
   if (error) {
     console.error('Error fetching all test rides:', error)
@@ -356,8 +317,8 @@ export async function rescheduleTestRide(
   const { data, error } = await supabase
     .from('test_rides')
     .update({
-      scheduled_date: newDate,
-      scheduled_time: newTime,
+      preferred_date: newDate,
+      preferred_time: newTime,
       updated_at: new Date().toISOString()
     })
     .eq('id', id)

@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('vehicles')
       .select('*')
-      .eq('is_active', true)
+      .eq('status', 'active')
 
     // Apply filters
     if (filters.minPrice !== undefined) {
@@ -154,23 +154,23 @@ export async function POST(request: NextRequest) {
       .insert({
         slug: body.slug,
         name: body.name,
-        tagline: body.tagline || null,
+        type: body.type || 'electric_scooter',
+        brand: body.brand || '',
+        model: body.model || '',
+        description: body.description || null,
         price: body.price,
+        discounted_price: body.discounted_price || null,
         images: body.images || [],
         colors: body.colors || [],
-        badges: body.badges || [],
+        features: body.features || {},
+        specifications: body.specifications || {},
         range_km: body.range_km,
-        top_speed: body.top_speed,
-        charge_hours: body.charge_hours,
-        motor_power_w: body.motor_power_w || null,
-        battery_wh: body.battery_wh || null,
-        ev_units_per_100km: body.ev_units_per_100km || null,
-        petrol_km_per_l: body.petrol_km_per_l || null,
-        rating: body.rating || 0,
-        reviews_count: body.reviews_count || 0,
-        is_active: body.is_active !== false,
-        stock_quantity: body.stock_quantity || 0,
-        released_at: body.released_at || null
+        top_speed_kmph: body.top_speed_kmph || body.top_speed,
+        charging_time_hours: body.charging_time_hours || body.charge_hours,
+        battery_capacity: body.battery_capacity || null,
+        motor_power: body.motor_power || null,
+        status: body.status || 'active',
+        stock_quantity: body.stock_quantity || 0
       })
       .select()
       .single()

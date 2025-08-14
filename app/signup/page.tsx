@@ -23,7 +23,17 @@ export default function SignupPage() {
   const { signup } = useAuth()
   const [error, setError] = React.useState<string | null>(null)
   const [loading, setLoading] = React.useState(false)
+  const [testRideModel, setTestRideModel] = React.useState<string | null>(null)
   const c = useForm<CustomerForm>()
+
+  React.useEffect(() => {
+    // Check if user came from test ride button
+    const redirectInfo = sessionStorage.getItem('testRideRedirect')
+    if (redirectInfo) {
+      const { model } = JSON.parse(redirectInfo)
+      setTestRideModel(model)
+    }
+  }, [])
 
   const submitCustomer = c.handleSubmit(async (data) => {
     // Validate password confirmation
@@ -54,9 +64,18 @@ export default function SignupPage() {
         return
       }
       
-      // Show success message and redirect to login
-      alert("Registration successful! Please check your email to verify your account.")
-      router.push('/login')
+      // Check if we need to redirect to test ride booking
+      const redirectInfo = sessionStorage.getItem('testRideRedirect')
+      if (redirectInfo) {
+        const { slug } = JSON.parse(redirectInfo)
+        sessionStorage.removeItem('testRideRedirect')
+        alert("Registration successful! Redirecting to book your test ride...")
+        router.push(`/test-rides/book?model=${slug}`)
+      } else {
+        // Show success message and redirect to login
+        alert("Registration successful! Please check your email to verify your account.")
+        router.push('/login')
+      }
     } catch (err) {
       setError("An unexpected error occurred")
       setLoading(false)
@@ -77,6 +96,11 @@ export default function SignupPage() {
 
       <div className="p-8 md:p-12">
         <h2 className="text-2xl font-bold">Create a Customer Account</h2>
+        {testRideModel && (
+          <p className="mt-2 text-sm text-emerald-700 font-medium">
+            Create an account to book a test ride for {testRideModel}
+          </p>
+        )}
 
         <form onSubmit={submitCustomer} className="mt-6 grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">

@@ -127,10 +127,10 @@ export async function DELETE(
       )
     }
     
-    // Soft delete vehicle by setting is_active to false
+    // Soft delete vehicle by setting status to inactive
     const { data, error } = await supabase
       .from('vehicles')
-      .update({ is_active: false })
+      .update({ status: 'inactive' })
       .eq('id', id)
       .select()
       .single()

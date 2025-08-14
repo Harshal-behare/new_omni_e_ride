@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { OmniButton } from '@/components/ui/omni-button'
-import { Phone, Mail, MapPin, Clock, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Phone, Mail, MapPin, Clock, CheckCircle2, AlertCircle, ChevronRight } from 'lucide-react'
 import { submitContactForm, ContactFormData } from '@/lib/api/leads'
 
 type FormVals = {
@@ -46,6 +47,15 @@ export default function ContactPage() {
   }
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
+      {/* Breadcrumb Navigation */}
+      <nav aria-label="Breadcrumb" className="flex items-center text-sm text-gray-600 mb-6">
+        <Link href="/" className="hover:text-gray-900 transition-colors">
+          Home
+        </Link>
+        <ChevronRight className="mx-2 h-4 w-4 text-gray-400" />
+        <span className="text-gray-900 font-medium">Contact</span>
+      </nav>
+
       <div className="rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 p-8 text-white">
         <h1 className="text-3xl font-extrabold">Get in Touch with OMNI E-RIDE</h1>
         <p className="mt-1 text-emerald-100">We&apos;re here to help you with all your electric scooter needs.</p>

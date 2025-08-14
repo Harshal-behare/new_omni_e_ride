@@ -5,16 +5,14 @@ import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { OmniButton } from '@/components/ui/omni-button'
 import { useDemoAuth } from '@/components/auth/demo-auth-provider'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Eye, EyeOff, ShieldCheck, Users, MapPin } from 'lucide-react'
 
 type FormVals = { email: string; password: string; remember: boolean }
 
 export default function LoginPage() {
   const [show, setShow] = React.useState(false)
-  const [role, setRole] = React.useState<'customer' | 'dealer' | 'admin'>('customer')
-  const { register, handleSubmit, formState: { errors }, setValue } = useForm<FormVals>({ defaultValues: { remember: true } })
-  const { login, loginAs } = useDemoAuth()
+  const { register, handleSubmit, formState: { errors } } = useForm<FormVals>({ defaultValues: { remember: true } })
+  const { login } = useDemoAuth()
   const [error, setError] = React.useState<string | null>(null)
   const [loading, setLoading] = React.useState(false)
 
@@ -24,17 +22,6 @@ export default function LoginPage() {
     setLoading(false)
     if (!res.ok) setError(res.error || 'Login failed')
   })
-
-  function fillDemo(r: 'customer' | 'dealer' | 'admin') {
-    const creds = {
-      customer: { email: 'customer@demo.com', password: 'demo123' },
-      dealer: { email: 'dealer@demo.com', password: 'demo123' },
-      admin: { email: 'admin@demo.com', password: 'demo123' },
-    }[r]
-    setValue('email', creds.email)
-    setValue('password', creds.password)
-    setRole(r)
-  }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] grid lg:grid-cols-2">
@@ -56,57 +43,58 @@ export default function LoginPage() {
       <div className="p-8 md:p-12 flex items-center justify-center">
         <div className="w-full max-w-md">
           <h2 className="text-2xl font-bold">Sign In to Your Account</h2>
-
-          <Tabs defaultValue="customer" className="mt-4" onValueChange={(v) => setRole(v as any)}>
-            <TabsList className="grid grid-cols-3 rounded-lg">
-              <TabsTrigger value="customer">Customer</TabsTrigger>
-              <TabsTrigger value="dealer">Dealer</TabsTrigger>
-              <TabsTrigger value="admin">Admin</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <p className="mt-2 text-sm text-gray-600">Welcome back! Please enter your credentials to continue.</p>
 
           <form onSubmit={onSubmit} className="mt-6 grid gap-4">
             <div>
               <label className="text-sm font-medium">Email Address</label>
-              <input type="email" className="mt-1 w-full rounded-lg border px-3 py-2 focus-visible:ring-emerald-500" {...register('email', { required: 'Email is required' })} />
+              <input 
+                type="email" 
+                className="mt-1 w-full rounded-lg border px-3 py-2 focus-visible:ring-emerald-500" 
+                placeholder="you@example.com"
+                {...register('email', { required: 'Email is required' })} 
+              />
               {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>}
             </div>
             <div>
               <label className="text-sm font-medium">Password</label>
               <div className="relative">
-                <input type={show ? 'text' : 'password'} className="mt-1 w-full rounded-lg border px-3 py-2 pr-10 focus-visible:ring-emerald-500" {...register('password', { required: 'Password is required' })} />
-                <button type="button" onClick={() => setShow((s) => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-600">{show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
+                <input 
+                  type={show ? 'text' : 'password'} 
+                  className="mt-1 w-full rounded-lg border px-3 py-2 pr-10 focus-visible:ring-emerald-500" 
+                  placeholder="Enter your password"
+                  {...register('password', { required: 'Password is required' })} 
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShow((s) => !s)} 
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-600"
+                >
+                  {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
               {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
             </div>
-            <label className="inline-flex items-center gap-2 text-sm">
-              <input type="checkbox" className="accent-emerald-600" {...register('remember')} /> Remember me
-            </label>
-            {error && <div className="rounded-lg bg-red-50 p-2 text-sm text-red-700">{error}</div>}
-            <OmniButton type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Sign In'}</OmniButton>
-            <div className="text-right">
+            <div className="flex items-center justify-between">
+              <label className="inline-flex items-center gap-2 text-sm">
+                <input type="checkbox" className="accent-emerald-600" {...register('remember')} /> Remember me
+              </label>
               <Link className="text-sm text-emerald-700 hover:underline" href="/forgot-password">Forgot Password?</Link>
             </div>
+            {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+            <OmniButton type="submit" disabled={loading} className="w-full">
+              {loading ? 'Signing in…' : 'Sign In'}
+            </OmniButton>
           </form>
 
-          <div className="mt-6 rounded-lg border p-4">
-            <div className="font-semibold">Demo Credentials</div>
-            <div className="mt-2 grid gap-2 sm:grid-cols-3">
-              <button onClick={() => fillDemo('customer')} className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50">Use Customer</button>
-              <button onClick={() => fillDemo('dealer')} className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50">Use Dealer</button>
-              <button onClick={() => fillDemo('admin')} className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50">Use Admin</button>
-            </div>
-            <div className="mt-3 text-sm text-gray-600">Or quick login:</div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <OmniButton variant="secondary" onClick={() => loginAs('customer')}>Quick Login Customer</OmniButton>
-              <OmniButton variant="outline" onClick={() => loginAs('dealer')}>Quick Login Dealer</OmniButton>
-              <OmniButton variant="ghost" onClick={() => loginAs('admin')}>Quick Login Admin</OmniButton>
-            </div>
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-700">
+              Don&apos;t have an account?{' '}
+              <Link className="text-emerald-700 hover:underline font-medium" href="/signup">
+                Sign Up
+              </Link>
+            </p>
           </div>
-
-          <p className="mt-6 text-sm text-gray-700">
-            Don&apos;t have an account? <Link className="text-emerald-700 hover:underline" href="/signup">Sign Up</Link>
-          </p>
         </div>
       </div>
     </div>

@@ -47,13 +47,28 @@ const nextConfig = {
   
   // Image optimization
   images: {
-    domains: [
-      'localhost',
-      'omni-e-ride.com',
-      'images.unsplash.com',
-      'placeholder.svg',
-      // Add your Supabase storage domain here
-      'your-project.supabase.co'
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+      {
+        protocol: 'https',
+        hostname: 'omni-e-ride.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'placeholder.svg',
+      },
+      {
+        protocol: 'https',
+        hostname: 'kfghxdqdgropxppopiud.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      },
     ],
     formats: ['image/avif', 'image/webp'],
   },
@@ -80,7 +95,7 @@ const ContentSecurityPolicy = `
   default-src 'self';
   script-src 'self' 'unsafe-eval' 'unsafe-inline' https://checkout.razorpay.com https://maps.googleapis.com;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  font-src 'self' https://fonts.gstatic.com;
+  font-src 'self' data: https://fonts.gstatic.com;
   img-src 'self' data: blob: https: http:;
   media-src 'self';
   connect-src 'self' https://api.razorpay.com https://*.supabase.co https://*.supabase.in wss://*.supabase.co wss://*.supabase.in https://api.resend.com;

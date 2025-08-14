@@ -1,6 +1,18 @@
+import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
+
 export default function AboutPage() {
   return (
     <main className="mx-auto max-w-7xl px-4 py-12">
+      {/* Breadcrumb Navigation */}
+      <nav aria-label="Breadcrumb" className="flex items-center text-sm text-gray-600 mb-8">
+        <Link href="/" className="hover:text-gray-900 transition-colors">
+          Home
+        </Link>
+        <ChevronRight className="mx-2 h-4 w-4 text-gray-400" />
+        <span className="text-gray-900 font-medium">About</span>
+      </nav>
+
       <section className="grid gap-8 lg:grid-cols-2 items-center">
         <div>
           <h1 className="text-4xl font-bold text-gray-900">About OMNI E-RIDE</h1>

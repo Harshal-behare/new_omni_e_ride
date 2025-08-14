@@ -3,7 +3,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useUser } from '@/hooks/useUser';
 
-// TODO: Implement realtime subscriptions
+// TODO: Implement realtime subscriptions when backend is ready
+// This is a placeholder implementation
+
 // Temporary types until realtime module is implemented
 type OrderStatusUpdate = any;
 type NotificationEvent = any;
@@ -25,7 +27,6 @@ export function useOrderStatusUpdates(
   useEffect(() => {
     if (!user) return;
     // TODO: Implement realtime subscription when backend is ready
-    // Placeholder implementation
   }, [user, options?.subscribeToAll, options?.dealerId]);
 
   return { updates, latestUpdate, error };
@@ -79,75 +80,13 @@ export function useAnalytics(filters?: { dealerId?: string; type?: string }) {
   const [metrics, setMetrics] = useState<any>(null);
   const [updates, setUpdates] = useState<AnalyticsUpdate[]>([]);
   const [error, setError] = useState<Error | null>(null);
-  const subscriptionRef = useRef<AnalyticsSubscription | null>(null);
-
-  // Load initial metrics
-  useEffect(() => {
-    const loadMetrics = async () => {
-      const subscription = createRealtimeSubscription('analytics') as AnalyticsSubscription;
-      subscriptionRef.current = subscription;
-      
-      const initialMetrics = await subscription.getRealtimeMetrics(filters?.dealerId);
-      if (initialMetrics) {
-        setMetrics(initialMetrics);
-      }
-    };
-
-    loadMetrics();
-  }, [filters?.dealerId]);
 
   useEffect(() => {
-    const subscription = createRealtimeSubscription('analytics') as AnalyticsSubscription;
-    subscriptionRef.current = subscription;
-
-    const handleUpdate = (update: AnalyticsUpdate) => {
-      setUpdates((prev) => [update, ...prev].slice(0, 100)); // Keep last 100 updates
-
-      // Update metrics based on the update type
-      setMetrics((prev: any) => {
-        if (!prev) return prev;
-
-        switch (update.type) {
-          case 'order':
-            return {
-              ...prev,
-              totalOrders: prev.totalOrders + (update.metric === 'new_order' ? 1 : 0),
-              pendingOrders: prev.pendingOrders + (update.metric === 'new_order' ? 1 : 0),
-            };
-          case 'revenue':
-            return {
-              ...prev,
-              totalRevenue: prev.totalRevenue + update.value,
-              completedOrders: prev.completedOrders + (update.metric === 'order_completed' ? 1 : 0),
-              pendingOrders: prev.pendingOrders - (update.metric === 'order_completed' ? 1 : 0),
-            };
-          default:
-            return prev;
-        }
-      });
-    };
-
-    const handleError = (err: Error) => {
-      console.error('Analytics subscription error:', err);
-      setError(err);
-    };
-
-    subscription.subscribe(handleUpdate, filters, handleError);
-    realtimeManager.addSubscription('analytics', subscription);
-
-    return () => {
-      realtimeManager.removeSubscription('analytics');
-      subscriptionRef.current = null;
-    };
+    // TODO: Implement analytics subscription when backend is ready
   }, [filters?.dealerId, filters?.type]);
 
   const refreshMetrics = useCallback(async () => {
-    if (!subscriptionRef.current) return;
-
-    const newMetrics = await subscriptionRef.current.getRealtimeMetrics(filters?.dealerId);
-    if (newMetrics) {
-      setMetrics(newMetrics);
-    }
+    // TODO: Implement when backend is ready
   }, [filters?.dealerId]);
 
   return {
@@ -162,55 +101,22 @@ export function useAnalytics(filters?: { dealerId?: string; type?: string }) {
 export function useTestRideSlots(filters?: { dealerId?: string; date?: string }) {
   const [slots, setSlots] = useState<TestRideSlotUpdate[]>([]);
   const [error, setError] = useState<Error | null>(null);
-  const subscriptionRef = useRef<TestRideSlotSubscription | null>(null);
 
   useEffect(() => {
-    const subscription = createRealtimeSubscription('testRides') as TestRideSlotSubscription;
-    subscriptionRef.current = subscription;
-
-    const handleUpdate = (slot: TestRideSlotUpdate) => {
-      setSlots((prev) => {
-        const index = prev.findIndex((s) => s.id === slot.id);
-        if (index >= 0) {
-          // Update existing slot
-          const updated = [...prev];
-          updated[index] = slot;
-          return updated;
-        } else {
-          // Add new slot
-          return [...prev, slot];
-        }
-      });
-    };
-
-    const handleError = (err: Error) => {
-      console.error('Test ride slot subscription error:', err);
-      setError(err);
-    };
-
-    subscription.subscribe(handleUpdate, filters, handleError);
-    realtimeManager.addSubscription('test-ride-slots', subscription);
-
-    return () => {
-      realtimeManager.removeSubscription('test-ride-slots');
-      subscriptionRef.current = null;
-    };
+    // TODO: Implement test ride subscription when backend is ready
   }, [filters?.dealerId, filters?.date]);
 
   const checkAvailability = useCallback(
     async (dealerId: string, date: string, time: string) => {
-      if (!subscriptionRef.current) return false;
-
-      return await subscriptionRef.current.checkAvailability(dealerId, date, time);
+      // TODO: Implement when backend is ready
+      return false;
     },
     []
   );
 
   const updateAvailability = useCallback(
     async (slotId: string, available: boolean) => {
-      if (!subscriptionRef.current) return;
-
-      await subscriptionRef.current.updateAvailability(slotId, available);
+      // TODO: Implement when backend is ready
     },
     []
   );
@@ -229,31 +135,7 @@ export function usePresence() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const subscription = createRealtimeSubscription('presence') as PresenceSubscription;
-
-    const handleSync = (users: any[]) => {
-      setOnlineUsers(users);
-    };
-
-    const handleJoin = (user: any) => {
-      console.log('User joined:', user);
-    };
-
-    const handleLeave = (user: any) => {
-      console.log('User left:', user);
-    };
-
-    const handleError = (err: Error) => {
-      console.error('Presence subscription error:', err);
-      setError(err);
-    };
-
-    subscription.subscribeToPresence(handleSync, handleJoin, handleLeave, handleError);
-    realtimeManager.addSubscription('presence', subscription);
-
-    return () => {
-      realtimeManager.removeSubscription('presence');
-    };
+    // TODO: Implement presence subscription when backend is ready
   }, []);
 
   return {
@@ -266,7 +148,7 @@ export function usePresence() {
 export function useRealtimeCleanup() {
   useEffect(() => {
     return () => {
-      realtimeManager.unsubscribeAll();
+      // TODO: Clean up subscriptions when backend is ready
     };
   }, []);
 }

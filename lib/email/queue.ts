@@ -1,3 +1,4 @@
+import * as React from 'react';
 import { EmailOptions, sendEmail, EmailResponse } from './send';
 
 // Email queue item interface
@@ -35,7 +36,7 @@ class EmailQueue {
   private queue: Map<string, EmailQueueItem> = new Map();
   private config: EmailQueueConfig;
   private isProcessing: boolean = false;
-  private processTimer: NodeJS.Timer | null = null;
+  private processTimer: NodeJS.Timeout | null = null;
 
   constructor(config: EmailQueueConfig = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -317,12 +318,12 @@ export async function queueWelcomeEmail(
   firstName: string,
   verificationUrl?: string
 ): Promise<string> {
-  const WelcomeEmail = (await import('@/emails/welcome')).default;
+  const { WelcomeEmail } = await import('@/emails/welcome');
   
   return emailQueue.add({
     to: email,
     subject: 'Welcome to Omni E-Ride! 🎉',
-    react: WelcomeEmail({
+    react: React.createElement(WelcomeEmail, {
       firstName,
       email,
       verificationUrl,
@@ -341,12 +342,12 @@ export async function queueOrderConfirmationEmail(
   email: string,
   orderData: any
 ): Promise<string> {
-  const OrderConfirmationEmail = (await import('@/emails/order-confirmation')).default;
+  const { OrderConfirmationEmail } = await import('@/emails/order-confirmation');
   
   return emailQueue.add({
     to: email,
     subject: `Order Confirmed - #${orderData.orderNumber}`,
-    react: OrderConfirmationEmail(orderData),
+    react: React.createElement(OrderConfirmationEmail, orderData),
     tags: [
       { name: 'type', value: 'order_confirmation' },
       { name: 'order_id', value: orderData.orderNumber },

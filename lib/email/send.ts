@@ -68,7 +68,7 @@ export async function sendEmail(options: EmailOptions): Promise<EmailResponse> {
       text: options.text,
       cc: options.cc,
       bcc: options.bcc,
-      reply_to: options.replyTo,
+      replyTo: options.replyTo,
       attachments: options.attachments,
       tags: options.tags,
       headers: options.headers,
@@ -123,7 +123,7 @@ export async function sendBulkEmails(
       text: email.text,
       cc: email.cc,
       bcc: email.bcc,
-      reply_to: email.replyTo,
+      replyTo: email.replyTo,
       attachments: email.attachments,
       tags: email.tags,
       headers: email.headers,
@@ -172,12 +172,13 @@ export async function sendWelcomeEmail(
   firstName: string,
   verificationUrl?: string
 ): Promise<EmailResponse> {
-  const WelcomeEmail = (await import('@/emails/welcome')).default;
+  const React = await import('react');
+  const { WelcomeEmail } = await import('@/emails/welcome');
   
   return sendEmail({
     to: email,
     subject: 'Welcome to Omni E-Ride! 🎉',
-    react: WelcomeEmail({
+    react: React.createElement(WelcomeEmail, {
       firstName,
       email,
       verificationUrl,
@@ -196,12 +197,13 @@ export async function sendOrderConfirmationEmail(
   email: string,
   orderData: any
 ): Promise<EmailResponse> {
-  const OrderConfirmationEmail = (await import('@/emails/order-confirmation')).default;
+  const React = await import('react');
+  const { OrderConfirmationEmail } = await import('@/emails/order-confirmation');
   
   return sendEmail({
     to: email,
     subject: `Order Confirmed - #${orderData.orderNumber}`,
-    react: OrderConfirmationEmail(orderData),
+    react: React.createElement(OrderConfirmationEmail, orderData),
     tags: [
       { name: 'type', value: 'order_confirmation' },
       { name: 'order_id', value: orderData.orderNumber },
@@ -216,12 +218,13 @@ export async function sendOrderStatusUpdateEmail(
   email: string,
   statusData: any
 ): Promise<EmailResponse> {
-  const OrderStatusUpdateEmail = (await import('@/emails/order-status-update')).default;
+  const React = await import('react');
+  const { OrderStatusUpdateEmail } = await import('@/emails/order-status-update');
   
   return sendEmail({
     to: email,
     subject: `Order Update - #${statusData.orderNumber}`,
-    react: OrderStatusUpdateEmail(statusData),
+    react: React.createElement(OrderStatusUpdateEmail, statusData),
     tags: [
       { name: 'type', value: 'order_status' },
       { name: 'order_id', value: statusData.orderNumber },
@@ -237,12 +240,13 @@ export async function sendTestRideConfirmationEmail(
   email: string,
   bookingData: any
 ): Promise<EmailResponse> {
-  const TestRideConfirmationEmail = (await import('@/emails/test-ride-confirmation')).default;
+  const React = await import('react');
+  const { TestRideConfirmationEmail } = await import('@/emails/test-ride-confirmation');
   
   return sendEmail({
     to: email,
     subject: `Test Ride Confirmed - ${bookingData.date}`,
-    react: TestRideConfirmationEmail(bookingData),
+    react: React.createElement(TestRideConfirmationEmail, bookingData),
     tags: [
       { name: 'type', value: 'test_ride_confirmation' },
       { name: 'booking_id', value: bookingData.bookingId },
@@ -257,12 +261,13 @@ export async function sendDealerApplicationStatusEmail(
   email: string,
   applicationData: any
 ): Promise<EmailResponse> {
-  const DealerApplicationStatusEmail = (await import('@/emails/dealer-application-status')).default;
+  const React = await import('react');
+  const { DealerApplicationStatusEmail } = await import('@/emails/dealer-application-status');
   
   return sendEmail({
     to: email,
     subject: `Dealer Application Update - ${applicationData.applicationId}`,
-    react: DealerApplicationStatusEmail(applicationData),
+    react: React.createElement(DealerApplicationStatusEmail, applicationData),
     tags: [
       { name: 'type', value: 'dealer_application' },
       { name: 'application_id', value: applicationData.applicationId },
@@ -278,12 +283,13 @@ export async function sendLeadAssignmentEmail(
   dealerEmail: string,
   leadData: any
 ): Promise<EmailResponse> {
-  const LeadAssignmentEmail = (await import('@/emails/lead-assignment')).default;
+  const React = await import('react');
+  const { LeadAssignmentEmail } = await import('@/emails/lead-assignment');
   
   return sendEmail({
     to: dealerEmail,
     subject: `New Lead Assigned: ${leadData.lead.name}`,
-    react: LeadAssignmentEmail(leadData),
+    react: React.createElement(LeadAssignmentEmail, leadData),
     tags: [
       { name: 'type', value: 'lead_assignment' },
       { name: 'lead_id', value: leadData.lead.id },

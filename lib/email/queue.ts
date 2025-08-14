@@ -365,8 +365,5 @@ export async function queueBatchEmails(
   return emailQueue.addBatch(emails, { scheduledFor });
 }
 
-// Export types
-export type { EmailQueueConfig };
-
 // Default export
 export default emailQueue;

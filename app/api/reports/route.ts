@@ -236,10 +236,10 @@ async function generateInventoryReport(supabase: any, dealerId?: string | null, 
       totalItems: inventory?.length || 0,
       totalQuantity: inventory?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0,
       totalReserved: inventory?.reduce((sum: number, item: any) => sum + (item.reserved_quantity || 0), 0) || 0,
-      lowStockItems: inventory?.filter(item => (item.quantity || 0) < 10).length || 0,
+      lowStockItems: inventory?.filter((item: any) => (item.quantity || 0) < 10).length || 0,
       inventoryByStatus: groupByField(inventory || [], 'status'),
       inventoryByDealer: groupByField(inventory || [], 'dealers.business_name'),
-      totalValue: inventory?.reduce((sum, item) => sum + ((item.quantity || 0) * (item.vehicles?.price || 0)), 0) || 0
+      totalValue: inventory?.reduce((sum: number, item: any) => sum + ((item.quantity || 0) * (item.vehicles?.price || 0)), 0) || 0
     }
 
     return {

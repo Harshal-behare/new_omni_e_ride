@@ -145,8 +145,8 @@ async function generateSalesReport(supabase: any, startDate: Date, endDate: Date
 
     const summary = {
       totalOrders: sales?.length || 0,
-      totalRevenue: sales?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0,
-      averageOrderValue: sales?.length ? (sales.reduce((sum, order) => sum + (order.total_amount || 0), 0) / sales.length) : 0,
+      totalRevenue: sales?.reduce((sum: number, order: any) => sum + (order.total_amount || 0), 0) || 0,
+      averageOrderValue: sales?.length ? (sales.reduce((sum: number, order: any) => sum + (order.total_amount || 0), 0) / sales.length) : 0,
       topVehicles: getTopItems(sales || [], 'vehicles', 'model'),
       topDealers: getTopItems(sales || [], 'dealers', 'business_name'),
       salesByDate: groupByDate(sales || [])

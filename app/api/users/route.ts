@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 // GET /api/users - List users with pagination and filtering
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
 // POST /api/users - Create new user (admin only)
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()

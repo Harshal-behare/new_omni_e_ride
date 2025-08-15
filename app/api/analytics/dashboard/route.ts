@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 // GET /api/analytics/dashboard - Get dashboard analytics
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -105,7 +105,7 @@ async function getUserMetrics(supabase: any, startDate: Date, dealerId?: string 
     return {
       total: allUsers?.length || 0,
       new: newUsers?.length || 0,
-      byRole: allUsers?.reduce((acc, user) => {
+      byRole: allUsers?.reduce((acc: Record<string, number>, user: any) => {
         acc[user.role] = (acc[user.role] || 0) + 1
         return acc
       }, {} as Record<string, number>) || {}
@@ -127,16 +127,16 @@ async function getOrderMetrics(supabase: any, startDate: Date, dealerId?: string
     const { data: allOrders } = await query
     const { data: newOrders } = await query.gte('created_at', startDate.toISOString())
 
-    const completedOrders = allOrders?.filter(o => o.status === 'completed') || []
-    const pendingOrders = allOrders?.filter(o => ['pending', 'processing'].includes(o.status)) || []
+    const completedOrders = allOrders?.filter((o: any) => o.status === 'completed') || []
+    const pendingOrders = allOrders?.filter((o: any) => ['pending', 'processing'].includes(o.status)) || []
 
     return {
       total: allOrders?.length || 0,
       new: newOrders?.length || 0,
       completed: completedOrders.length,
       pending: pendingOrders.length,
-      totalValue: allOrders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0,
-      byStatus: allOrders?.reduce((acc, order) => {
+      totalValue: allOrders?.reduce((sum: number, order: any) => sum + (order.total_amount || 0), 0) || 0,
+      byStatus: allOrders?.reduce((acc: Record<string, number>, order: any) => {
         acc[order.status] = (acc[order.status] || 0) + 1
         return acc
       }, {} as Record<string, number>) || {}
@@ -158,15 +158,15 @@ async function getTestRideMetrics(supabase: any, startDate: Date, dealerId?: str
     const { data: allTestRides } = await query
     const { data: newTestRides } = await query.gte('created_at', startDate.toISOString())
 
-    const completedRides = allTestRides?.filter(r => r.status === 'completed') || []
-    const scheduledRides = allTestRides?.filter(r => r.status === 'scheduled') || []
+    const completedRides = allTestRides?.filter((r: any) => r.status === 'completed') || []
+    const scheduledRides = allTestRides?.filter((r: any) => r.status === 'scheduled') || []
 
     return {
       total: allTestRides?.length || 0,
       new: newTestRides?.length || 0,
       completed: completedRides.length,
       scheduled: scheduledRides.length,
-      byStatus: allTestRides?.reduce((acc, ride) => {
+      byStatus: allTestRides?.reduce((acc: Record<string, number>, ride: any) => {
         acc[ride.status] = (acc[ride.status] || 0) + 1
         return acc
       }, {} as Record<string, number>) || {}
@@ -186,14 +186,14 @@ async function getVehicleMetrics(supabase: any, startDate: Date, dealerId?: stri
 
     return {
       total: allVehicles?.length || 0,
-      available: allVehicles?.filter(v => v.status === 'available').length || 0,
-      sold: allVehicles?.filter(v => v.status === 'sold').length || 0,
-      byModel: allVehicles?.reduce((acc, vehicle) => {
+      available: allVehicles?.filter((v: any) => v.status === 'available').length || 0,
+      sold: allVehicles?.filter((v: any) => v.status === 'sold').length || 0,
+      byModel: allVehicles?.reduce((acc: Record<string, number>, vehicle: any) => {
         acc[vehicle.model] = (acc[vehicle.model] || 0) + 1
         return acc
       }, {} as Record<string, number>) || {},
       averagePrice: allVehicles?.length ? 
-        allVehicles.reduce((sum, v) => sum + (v.price || 0), 0) / allVehicles.length : 0
+        allVehicles.reduce((sum: number, v: any) => sum + (v.price || 0), 0) / allVehicles.length : 0
     }
   } catch (error) {
     console.error('Error getting vehicle metrics:', error)
@@ -215,8 +215,8 @@ async function getRevenueMetrics(supabase: any, startDate: Date, dealerId?: stri
     const { data: allRevenue } = await query
     const { data: periodRevenue } = await query.gte('created_at', startDate.toISOString())
 
-    const total = allRevenue?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0
-    const period = periodRevenue?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0
+    const total = allRevenue?.reduce((sum: number, order: any) => sum + (order.total_amount || 0), 0) || 0
+    const period = periodRevenue?.reduce((sum: number, order: any) => sum + (order.total_amount || 0), 0) || 0
 
     return {
       total,
@@ -244,12 +244,12 @@ async function getLeadMetrics(supabase: any, startDate: Date, dealerId?: string 
     return {
       total: allLeads?.length || 0,
       new: newLeads?.length || 0,
-      converted: allLeads?.filter(l => l.status === 'converted').length || 0,
-      bySource: allLeads?.reduce((acc, lead) => {
+      converted: allLeads?.filter((l: any) => l.status === 'converted').length || 0,
+      bySource: allLeads?.reduce((acc: Record<string, number>, lead: any) => {
         acc[lead.source] = (acc[lead.source] || 0) + 1
         return acc
       }, {} as Record<string, number>) || {},
-      byStatus: allLeads?.reduce((acc, lead) => {
+      byStatus: allLeads?.reduce((acc: Record<string, number>, lead: any) => {
         acc[lead.status] = (acc[lead.status] || 0) + 1
         return acc
       }, {} as Record<string, number>) || {}

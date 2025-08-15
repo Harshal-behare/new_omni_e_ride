@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 // POST /api/notifications/bulk - Bulk actions on notifications
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()

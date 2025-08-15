@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 // GET /api/inventory - Get inventory with filtering and pagination
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
 // POST /api/inventory - Create new inventory entry
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()

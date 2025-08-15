@@ -7,12 +7,15 @@ const signupSchema = z.object({
   password: z.string().min(6),
   name: z.string().min(1),
   role: z.enum(['customer', 'dealer', 'admin']).default('customer'),
+  phone: z.string().optional(),
+  city: z.string().optional(),
+  pincode: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, name, role } = signupSchema.parse(body)
+    const { email, password, name, role, phone, city, pincode } = signupSchema.parse(body)
     
     const supabase = await createClient()
     
@@ -44,7 +47,11 @@ export async function POST(request: NextRequest) {
           email: authData.user.email,
           name,
           role,
+          phone,
+          city,
+          pincode,
           created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         })
       
       // If profile creation fails, log it but don't fail the signup

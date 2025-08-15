@@ -45,6 +45,10 @@ export async function middleware(request: NextRequest) {
 
   // Check if current path needs protection
   for (const [route, allowedRoles] of Object.entries(protectedRoutes)) {
+    // Special case: don't protect /dealers (public page) when checking /dealer (dashboard)
+    if (route === '/dealer' && path === '/dealers') {
+      continue
+    }
     if (path.startsWith(route)) {
       if (!user) {
         // Redirect to login if not authenticated

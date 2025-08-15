@@ -5,20 +5,47 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { RoleGate } from '@/components/auth/role-gate'
 import { OmniButton } from '@/components/ui/omni-button'
-import { Home, Calendar, ShoppingBag, User, Bell, LifeBuoy, Menu, ChevronLeft, ChevronRight, Shield } from 'lucide-react'
+import { UserAvatar } from '@/components/ui/user-avatar'
+import { Home, Calendar, ShoppingBag, User, Bell, LifeBuoy, Menu, ChevronLeft, ChevronRight, Shield, LogOut, Car, Briefcase } from 'lucide-react'
 import { useDemoAuth } from '@/components/auth/demo-auth-provider'
 import { cn } from '@/lib/utils'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { logout } = useDemoAuth()
+  const { user, logout } = useDemoAuth()
   const [collapsed, setCollapsed] = React.useState(false)
+  const [profile, setProfile] = React.useState<{name?: string, email?: string} | null>(null)
+
+  React.useEffect(() => {
+    if (user?.email) {
+      fetchProfile()
+    }
+  }, [user])
+
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch('/api/profile')
+      if (response.ok) {
+        const data = await response.json()
+        setProfile(data)
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error)
+    }
+  }
+
+  const displayName = profile?.name || user?.name || 'User'
+  const displayEmail = profile?.email || user?.email || 'user@example.com'
+  const firstName = displayName.split(' ')[0]
 
   const items = [
     { href: '/dashboard', icon: <Home className="h-5 w-5" />, label: 'Overview' },
+    { href: '/dashboard/vehicles', icon: <Car className="h-5 w-5" />, label: 'Browse Vehicles' },
     { href: '/dashboard/orders', icon: <ShoppingBag className="h-5 w-5" />, label: 'My Orders' },
     { href: '/dashboard/test-rides', icon: <Calendar className="h-5 w-5" />, label: 'Test Rides' },
+    { href: '/dashboard/dealer-application', icon: <Briefcase className="h-5 w-5" />, label: 'Become Dealer' },
     { href: '/dashboard/warranty', icon: <Shield className="h-5 w-5" />, label: 'Warranty' },
     { href: '/dashboard/profile', icon: <User className="h-5 w-5" />, label: 'Profile' },
     { href: '/dashboard/notifications', icon: <Bell className="h-5 w-5" />, label: 'Notifications' },
@@ -41,9 +68,41 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <button onClick={() => setCollapsed((c) => !c)} className="hidden md:inline-flex items-center rounded-lg border px-2 py-1.5">
               {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />} Menu
             </button>
-            <Link href="/" className="ml-2 font-bold text-emerald-700">OMNI E-RIDE</Link>
+            <span className="ml-2 font-bold text-emerald-700">OMNI E-RIDE</span>
           </div>
-          <OmniButton variant="outline" size="sm" onClick={logout}>Logout</OmniButton>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 hover:bg-gray-50 rounded-lg p-1.5 transition-colors">
+                <UserAvatar 
+                  name={displayName}
+                  email={displayEmail}
+                  size="sm"
+                  showOnline
+                />
+                <span className="hidden sm:block text-sm font-medium text-gray-700">{firstName}</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>
+                <div className="flex items-center gap-2">
+                  <UserAvatar 
+                    name={displayName}
+                    email={displayEmail}
+                    size="sm"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">{displayName}</span>
+                    <span className="text-xs text-gray-500">{displayEmail}</span>
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout} className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600">
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 

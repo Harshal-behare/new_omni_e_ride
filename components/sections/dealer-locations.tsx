@@ -1,14 +1,16 @@
 'use client'
 
 import * as React from 'react'
-import { MapPin, Search, Phone, Navigation, Globe } from 'lucide-react'
+import { MapPin, Search, Phone, Navigation, Globe, Info } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Slider } from '@/components/ui/slider'
 import { OmniButton } from '@/components/ui/omni-button'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
+import { DealerDetailModal } from '@/components/modals/dealer-detail-modal'
 
 type Dealer = {
   id: string
@@ -42,6 +44,8 @@ export default function DealerLocations() {
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
   const [dealers, setDealers] = React.useState<Dealer[]>([])
   const [loading, setLoading] = React.useState(true)
+  const [selectedDealer, setSelectedDealer] = React.useState<Dealer | null>(null)
+  const [modalOpen, setModalOpen] = React.useState(false)
 
   React.useEffect(() => {
     fetchDealers()
@@ -97,7 +101,11 @@ export default function DealerLocations() {
                     key={d.id}
                     title={d.business_name}
                     aria-label={`${d.business_name}, ${d.city}`}
-                    onClick={() => setSelectedId(d.id)}
+                    onClick={() => {
+                      setSelectedId(d.id)
+                      setSelectedDealer(d)
+                      setModalOpen(true)
+                    }}
                     className={cn(
                       'absolute -translate-x-1/2 -translate-y-full rounded-full border bg-white p-1.5 shadow-md transition',
                       active ? 'border-emerald-600 ring-2 ring-emerald-300' : 'border-gray-300 hover:scale-105'
@@ -201,17 +209,23 @@ export default function DealerLocations() {
                           </div>
                         </div>
                         <div className="mt-3 flex flex-wrap gap-2">
-                          <a href={`tel:${d.business_phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm">
-                            <Phone className="h-4 w-4" /> Call Now
+                          <a href={`tel:${d.business_phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-1 rounded-lg border px-2 py-1.5 text-xs">
+                            <Phone className="h-3 w-3" /> Call
                           </a>
-                          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.business_address)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-sm text-white hover:bg-emerald-700">
-                            <Navigation className="h-4 w-4" /> Get Directions
+                          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.business_address)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs text-white hover:bg-emerald-700">
+                            <Navigation className="h-3 w-3" /> Directions
                           </a>
-                          {d.business_email && (
-                            <a href={`mailto:${d.business_email}`} className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm hover:bg-gray-100">
-                              <Globe className="h-4 w-4" /> Email
-                            </a>
-                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedDealer(d)
+                              setModalOpen(true)
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-1.5 text-xs h-auto"
+                          >
+                            <Info className="h-3 w-3" /> More Info
+                          </Button>
                         </div>
                       </div>
                     )
@@ -230,6 +244,13 @@ export default function DealerLocations() {
           </p>
         </div>
       </div>
+
+      {/* Dealer Detail Modal */}
+      <DealerDetailModal
+        dealer={selectedDealer}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+      />
     </section>
   )
 }

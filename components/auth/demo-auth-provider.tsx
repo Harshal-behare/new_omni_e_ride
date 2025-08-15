@@ -21,7 +21,7 @@ type AuthCtx = {
   login: (opts: { email: string; password: string; remember?: boolean }) => Promise<{ ok: boolean; error?: string }>
   loginAs: (role: UserRole) => void
   logout: () => Promise<void>
-  signup: (opts: { email: string; password: string; name: string; role?: UserRole }) => Promise<{ ok: boolean; error?: string }>
+  signup: (opts: { email: string; password: string; name: string; role?: UserRole; phone?: string; city?: string; pincode?: string }) => Promise<{ ok: boolean; error?: string }>
   resetPassword: (email: string) => Promise<{ ok: boolean; error?: string }>
   updatePassword: (password: string) => Promise<{ ok: boolean; error?: string }>
   refreshSession: () => Promise<void>
@@ -47,19 +47,20 @@ export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
 
   // Fetch and set the current session
   const refreshSession = React.useCallback(async () => {
-    // Check if in demo mode first
     try {
+      setLoading(true)
+      
+      // Check if in demo mode first
       const demoUser = localStorage.getItem('omni_demo_user')
       if (demoUser) {
-        setUser(JSON.parse(demoUser))
+        const parsedUser = JSON.parse(demoUser)
+        setUser(parsedUser)
         setIsDemoMode(true)
         setLoading(false)
         return
       }
-    } catch {}
 
-    // If not in demo mode, check Supabase session
-    try {
+      // If not in demo mode, check Supabase session
       const { data: { session: currentSession } } = await supabase.auth.getSession()
       setSession(currentSession)
       
@@ -95,10 +96,14 @@ export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
   // Initialize auth state
   React.useEffect(() => {
     refreshSession()
+  }, [])
 
-    // Listen for auth state changes (only for Supabase)
+  // Listen for auth state changes (only for Supabase)
+  React.useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (isDemoMode) return // Skip if in demo mode
+      // Skip if in demo mode
+      const demoUser = localStorage.getItem('omni_demo_user')
+      if (demoUser) return
       
       setSession(session)
       
@@ -129,7 +134,7 @@ export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe()
     }
-  }, [supabase, refreshSession, isDemoMode])
+  }, [supabase])
 
   const login = async ({ email, password, remember }: { email: string; password: string; remember?: boolean }) => {
     // Check if it's a demo login
@@ -215,17 +220,20 @@ export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signup = async ({ email, password, name, role = 'customer' }: { 
+  const signup = async ({ email, password, name, role = 'customer', phone, city, pincode }: { 
     email: string; 
     password: string; 
     name: string;
     role?: UserRole;
+    phone?: string;
+    city?: string;
+    pincode?: string;
   }) => {
     try {
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name, role }),
+        body: JSON.stringify({ email, password, name, role, phone, city, pincode }),
       })
       
       const data = await response.json()

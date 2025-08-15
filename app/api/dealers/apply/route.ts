@@ -35,20 +35,21 @@ export async function POST(request: NextRequest) {
     
     // Validate required fields
     const requiredFields = [
-      'company_name',
-      'business_registration_number',
-      'contact_name',
-      'contact_email',
-      'contact_phone',
-      'address_line1',
+      'business_name',
+      'business_type',
+      'business_address',
       'city',
-      'state_province',
-      'postal_code',
-      'terms_accepted'
+      'state',
+      'pincode',
+      'business_phone',
+      'current_business',
+      'experience_years',
+      'investment_capacity',
+      'why_partner'
     ]
     
     for (const field of requiredFields) {
-      if (!body[field]) {
+      if (!body[field] && body[field] !== 0) {
         return NextResponse.json(
           { error: `Missing required field: ${field}` },
           { status: 400 }
@@ -56,45 +57,48 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // Validate terms acceptance separately (required but not in schema yet)
     if (!body.terms_accepted) {
       return NextResponse.json(
-        { error: 'You must accept the terms and conditions' },
+        { error: 'You must accept the terms and conditions to proceed' },
         { status: 400 }
       )
     }
     
-    // Create application
-    const application = await createDealerApplication({
-      company_name: body.company_name,
-      business_registration_number: body.business_registration_number,
-      tax_id: body.tax_id,
-      
-      contact_name: body.contact_name,
-      contact_email: body.contact_email,
-      contact_phone: body.contact_phone,
-      
-      address_line1: body.address_line1,
-      address_line2: body.address_line2,
+    // Create application with correct schema mapping
+    const applicationData = {
+      business_name: body.business_name,
+      business_type: body.business_type,
+      business_address: body.business_address,
       city: body.city,
-      state_province: body.state_province,
-      postal_code: body.postal_code,
-      country: body.country || 'USA',
+      state: body.state,
+      pincode: body.pincode,
+      business_phone: body.business_phone,
+      business_email: body.business_email || '',
+      gst_number: body.gst_number || '',
+      pan_number: body.pan_number || '',
+      aadhar_number: body.aadhar_number || '',
+      current_business: body.current_business,
+      experience_years: body.experience_years,
+      investment_capacity: body.investment_capacity,
+      preferred_areas: body.preferred_areas || [],
+      why_partner: body.why_partner,
+      documents: body.documents || {}
+    }
+    
+    // Insert directly into Supabase since createDealerApplication uses old schema
+    const { data: application, error: insertError } = await supabase
+      .from('dealer_applications')
+      .insert([{
+        ...applicationData,
+        user_id: user.id
+      }])
+      .select()
+      .single()
       
-      years_in_business: body.years_in_business,
-      annual_revenue: body.annual_revenue,
-      existing_brands: body.existing_brands,
-      showroom_size_sqft: body.showroom_size_sqft,
-      number_of_employees: body.number_of_employees,
-      website_url: body.website_url,
-      
-      business_license_url: body.business_license_url,
-      tax_certificate_url: body.tax_certificate_url,
-      bank_statement_url: body.bank_statement_url,
-      additional_documents: body.additional_documents,
-      
-      terms_accepted: body.terms_accepted,
-      notes: body.notes
-    })
+    if (insertError) {
+      throw new Error(insertError.message)
+    }
     
     return NextResponse.json(
       {

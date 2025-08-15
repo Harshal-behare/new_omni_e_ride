@@ -102,7 +102,7 @@ export default function OrdersPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">My Orders</h1>
-        <Link href="/vehicles">
+        <Link href="/dashboard/vehicles">
           <Button>
             <ShoppingCart className="h-4 w-4 mr-2" />
             Shop Vehicles
@@ -130,7 +130,7 @@ export default function OrdersPage() {
                 <div className="text-center py-8">
                   <Package className="h-12 w-12 text-gray-400 mx-auto mb-3" />
                   <p className="text-gray-600 mb-4">No orders yet</p>
-                  <Link href="/vehicles">
+                  <Link href="/dashboard/vehicles">
                     <Button variant="outline">Browse Vehicles</Button>
                   </Link>
                 </div>

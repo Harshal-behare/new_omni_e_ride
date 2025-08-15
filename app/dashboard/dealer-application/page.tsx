@@ -1,93 +1,222 @@
 'use client'
 
-import * as React from 'react'
-import { useDemoAuth } from '@/components/auth/demo-auth-provider'
-import { getUserApplication, submitApplication } from '@/lib/stores/dealer-applications'
+import { useState, useEffect } from 'react'
+import { DealerApplicationForm } from '@/components/dealer/dealer-application-form'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { OmniButton } from '@/components/ui/omni-button'
+import { createClient } from '@/lib/supabase/client'
+import { Badge } from '@/components/ui/badge'
+import { CheckCircle, Clock, XCircle, AlertCircle } from 'lucide-react'
 
 export default function DealerApplicationPage() {
-  const { user } = useDemoAuth()
-  const [app, setApp] = React.useState(getUserApplication(user?.email || ''))
+  const [loading, setLoading] = useState(true)
+  const [existingApplication, setExistingApplication] = useState<any>(null)
+  const [userRole, setUserRole] = useState<string | null>(null)
 
-  function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    if (!user?.email) return
-    const fd = new FormData(e.currentTarget)
-    const applicantName = String(fd.get('name') || '')
-    const phone = String(fd.get('phone') || '')
-    const city = String(fd.get('city') || '')
-    const businessName = String(fd.get('business') || '')
-    const yearsExperience = Number(fd.get('years') || 0)
-    const gst = String(fd.get('gst') || '')
-    const message = String(fd.get('message') || '')
+  useEffect(() => {
+    checkExistingApplication()
+  }, [])
 
-    const res = submitApplication({
-      applicantEmail: user.email,
-      applicantName,
-      phone,
-      city,
-      businessName,
-      yearsExperience,
-      gst,
-      message,
-    })
-    setApp(res)
-    alert('Application submitted. Admin will review it. Updates will be emailed to you.')
+  async function checkExistingApplication() {
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        setLoading(false)
+        return
+      }
+
+      // Check user role
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      
+      if (profile) {
+        setUserRole(profile.role)
+      }
+
+      // Check for existing application
+      const { data: application } = await supabase
+        .from('dealer_applications')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+      
+      if (application) {
+        setExistingApplication(application)
+      }
+    } catch (error) {
+      console.error('Error checking application:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">Loading...</div>
+      </div>
+    )
+  }
+
+  // If user is already a dealer
+  if (userRole === 'dealer') {
+    return (
+      <div>
+        <h1 className="text-2xl font-bold mb-4">Dealer Status</h1>
+        <Card className="max-w-2xl">
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+              <h2 className="text-xl font-semibold">You are an approved dealer!</h2>
+              <p className="text-gray-600">
+                You have full access to the dealer dashboard and features.
+              </p>
+              <a href="/dealer" className="text-emerald-600 hover:underline">
+                Go to Dealer Dashboard →
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // If user has an existing application
+  if (existingApplication) {
+    const statusConfig = {
+      pending: {
+        icon: Clock,
+        color: 'text-yellow-500',
+        bgColor: 'bg-yellow-50',
+        borderColor: 'border-yellow-200',
+        message: 'Your application is pending review. We will notify you once it has been processed.'
+      },
+      under_review: {
+        icon: AlertCircle,
+        color: 'text-blue-500',
+        bgColor: 'bg-blue-50',
+        borderColor: 'border-blue-200',
+        message: 'Your application is currently under review by our team.'
+      },
+      approved: {
+        icon: CheckCircle,
+        color: 'text-green-500',
+        bgColor: 'bg-green-50',
+        borderColor: 'border-green-200',
+        message: 'Congratulations! Your dealer application has been approved.'
+      },
+      rejected: {
+        icon: XCircle,
+        color: 'text-red-500',
+        bgColor: 'bg-red-50',
+        borderColor: 'border-red-200',
+        message: existingApplication.rejection_reason || 'Your application was not approved at this time.'
+      }
+    }
+
+    const status = statusConfig[existingApplication.status as keyof typeof statusConfig]
+    const StatusIcon = status.icon
+
+    return (
+      <div>
+        <h1 className="text-2xl font-bold mb-4">Dealer Application Status</h1>
+        <Card className="max-w-3xl">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Application Details</CardTitle>
+              <Badge className={`${status.bgColor} ${status.color} border ${status.borderColor}`}>
+                {existingApplication.status.replace('_', ' ').toUpperCase()}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className={`p-4 rounded-lg ${status.bgColor} border ${status.borderColor} mb-6`}>
+              <div className="flex items-start gap-3">
+                <StatusIcon className={`h-5 w-5 ${status.color} mt-0.5`} />
+                <div>
+                  <p className="font-medium">{status.message}</p>
+                  {existingApplication.approved_at && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      Processed on: {new Date(existingApplication.approved_at).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <span className="text-sm text-gray-600">Application ID:</span>
+                  <p className="font-medium">{existingApplication.id}</p>
+                </div>
+                <div>
+                  <span className="text-sm text-gray-600">Submitted:</span>
+                  <p className="font-medium">
+                    {new Date(existingApplication.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h3 className="font-semibold mb-3">Company Information</h3>
+                <div className="grid gap-3 md:grid-cols-2 text-sm">
+                  <div>
+                    <span className="text-gray-600">Company Name:</span>
+                    <p className="font-medium">{existingApplication.company_name}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Registration Number:</span>
+                    <p className="font-medium">{existingApplication.business_registration_number}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Contact:</span>
+                    <p className="font-medium">{existingApplication.contact_name}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Email:</span>
+                    <p className="font-medium">{existingApplication.contact_email}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Phone:</span>
+                    <p className="font-medium">{existingApplication.contact_phone}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Location:</span>
+                    <p className="font-medium">
+                      {existingApplication.city}, {existingApplication.state_province}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {existingApplication.status === 'rejected' && (
+                <div className="border-t pt-4">
+                  <p className="text-sm text-gray-600">
+                    If you would like to discuss your application or submit a new one, 
+                    please contact our support team.
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Show the application form for new applicants
   return (
     <div>
-      <h1 className="text-2xl font-bold">Dealer Application</h1>
-
-      {!app ? (
-        <Card className="mt-4 max-w-2xl">
-          <CardHeader><CardTitle>Apply to become a dealer</CardTitle></CardHeader>
-          <CardContent>
-            <form onSubmit={submit} className="grid gap-3">
-              <Field label="Full Name"><input name="name" required className="w-full rounded-lg border px-3 py-2" defaultValue={user?.name} /></Field>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <Field label="Phone"><input name="phone" required className="w-full rounded-lg border px-3 py-2" /></Field>
-                <Field label="City/District"><input name="city" required className="w-full rounded-lg border px-3 py-2" /></Field>
-              </div>
-              <Field label="Business Name"><input name="business" required className="w-full rounded-lg border px-3 py-2" /></Field>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <Field label="Years of Experience"><input type="number" name="years" className="w-full rounded-lg border px-3 py-2" /></Field>
-                <Field label="GST Number (optional)"><input name="gst" className="w-full rounded-lg border px-3 py-2" /></Field>
-              </div>
-              <Field label="Why do you want to be a dealer?"><textarea name="message" rows={4} className="w-full rounded-lg border px-3 py-2" /></Field>
-              <OmniButton type="submit">Submit Application</OmniButton>
-              <p className="text-xs text-gray-600">You’ll receive updates over email.</p>
-            </form>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="mt-4 max-w-2xl">
-          <CardHeader><CardTitle>Application Status</CardTitle></CardHeader>
-          <CardContent className="text-sm text-gray-700">
-            <div><span className="text-gray-600">Application ID:</span> {app.id}</div>
-            <div><span className="text-gray-600">Status:</span> <strong>{app.status}</strong></div>
-            <div className="mt-3">
-              <div><span className="text-gray-600">Name:</span> {app.applicantName}</div>
-              <div><span className="text-gray-600">Phone:</span> {app.phone}</div>
-              <div><span className="text-gray-600">City:</span> {app.city}</div>
-              <div><span className="text-gray-600">Business:</span> {app.businessName}</div>
-              {!!app.yearsExperience && <div><span className="text-gray-600">Experience:</span> {app.yearsExperience} years</div>}
-              {!!app.gst && <div><span className="text-gray-600">GST:</span> {app.gst}</div>}
-            </div>
-            <p className="mt-3 text-xs text-gray-600">Admin will approve or decline your application. If approved, your role will be updated to Dealer.</p>
-          </CardContent>
-        </Card>
-      )}
+      <h1 className="text-2xl font-bold mb-4">Become an OMNI Dealer</h1>
+      <p className="text-gray-600 mb-6">
+        Join our network of authorized dealers and grow your business with OMNI's innovative electric vehicles.
+      </p>
+      <DealerApplicationForm />
     </div>
-  )
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="text-sm">
-      <div className="font-medium text-gray-800">{label}</div>
-      <div className="mt-1">{children}</div>
-    </label>
   )
 }

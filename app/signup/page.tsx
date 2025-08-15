@@ -1,9 +1,11 @@
 "use client"
 
-import type * as React from "react"
+import * as React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { OmniButton } from "@/components/ui/omni-button"
+import { useAuth } from "@/hooks/use-auth"
 
 type CustomerForm = {
   name: string
@@ -17,9 +19,68 @@ type CustomerForm = {
 }
 
 export default function SignupPage() {
+  const router = useRouter()
+  const { signup } = useAuth()
+  const [error, setError] = React.useState<string | null>(null)
+  const [loading, setLoading] = React.useState(false)
+  const [testRideModel, setTestRideModel] = React.useState<string | null>(null)
   const c = useForm<CustomerForm>()
 
-  const submitCustomer = c.handleSubmit(() => alert("Customer registration submitted (demo)"))
+  React.useEffect(() => {
+    // Check if user came from test ride button
+    const redirectInfo = sessionStorage.getItem('testRideRedirect')
+    if (redirectInfo) {
+      const { model } = JSON.parse(redirectInfo)
+      setTestRideModel(model)
+    }
+  }, [])
+
+  const submitCustomer = c.handleSubmit(async (data) => {
+    // Validate password confirmation
+    if (data.password !== data.confirm) {
+      setError("Passwords do not match")
+      return
+    }
+    
+    if (data.password.length < 6) {
+      setError("Password must be at least 6 characters")
+      return
+    }
+    
+    setError(null)
+    setLoading(true)
+    
+    try {
+      const result = await signup({
+        email: data.email,
+        password: data.password,
+        name: data.name,
+        role: 'customer' // Default to customer role
+      })
+      
+      if (!result.ok) {
+        setError(result.error || "Signup failed")
+        setLoading(false)
+        return
+      }
+      
+      // Check if we need to redirect to test ride booking
+      const redirectInfo = sessionStorage.getItem('testRideRedirect')
+      if (redirectInfo) {
+        const { slug } = JSON.parse(redirectInfo)
+        sessionStorage.removeItem('testRideRedirect')
+        alert("Registration successful! Redirecting to book your test ride...")
+        router.push(`/test-rides/book?model=${slug}`)
+      } else {
+        // Show success message and redirect to login
+        alert("Registration successful! Please check your email to verify your account.")
+        router.push('/login')
+      }
+    } catch (err) {
+      setError("An unexpected error occurred")
+      setLoading(false)
+    }
+  })
 
   return (
     <div className="min-h-[calc(100vh-4rem)] grid lg:grid-cols-2">
@@ -35,6 +96,11 @@ export default function SignupPage() {
 
       <div className="p-8 md:p-12">
         <h2 className="text-2xl font-bold">Create a Customer Account</h2>
+        {testRideModel && (
+          <p className="mt-2 text-sm text-emerald-700 font-medium">
+            Create an account to book a test ride for {testRideModel}
+          </p>
+        )}
 
         <form onSubmit={submitCustomer} className="mt-6 grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -76,7 +142,14 @@ export default function SignupPage() {
             <input type="checkbox" className="accent-emerald-600" {...c.register("newsletter")} /> Subscribe to
             newsletter
           </label>
-          <OmniButton type="submit">Create Account</OmniButton>
+          {error && (
+            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+          <OmniButton type="submit" disabled={loading}>
+            {loading ? "Creating Account..." : "Create Account"}
+          </OmniButton>
           <p className="text-sm text-gray-700">
             Already have an account?{" "}
             <Link className="text-emerald-700 hover:underline" href="/login">

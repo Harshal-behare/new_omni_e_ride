@@ -38,13 +38,10 @@ export default function SiteFooter() {
             <h3 className="mb-4 text-sm font-semibold text-white">Quick Links</h3>
             <ul className="grid gap-2 text-sm">
               {[
-                ['Browse Models', '/models'],
+                ['Models', '/models'],
                 ['Find Dealers', '/dealers'],
-                ['Warranty', '/warranty'],
                 ['About Us', '/about'],
-                ['Careers', '/careers'],
-                ['Blog', '/blog'],
-                ['Press Releases', '/press'],
+                ['Contact', '/contact'],
               ].map(([label, href]) => (
                 <li key={label}>
                   <Link href={href} className="hover:text-emerald-400 transition-colors">{label}</Link>
@@ -53,17 +50,16 @@ export default function SiteFooter() {
             </ul>
           </div>
 
-          {/* Customer Service */}
+          {/* Support */}
           <div>
-            <h3 className="mb-4 text-sm font-semibold text-white">Customer Service</h3>
+            <h3 className="mb-4 text-sm font-semibold text-white">Support</h3>
             <ul className="grid gap-2 text-sm">
               {[
                 ['Contact Us', '/contact'],
-                ['Customer Support', '/support'],
                 ['FAQ', '/faq'],
-                ['Warranty Information', '/warranty'],
-                ['Service Centers', '/service-centers'],
-                ['Download Brochures', '/brochures'],
+                ['Warranty', '/warranty'],
+                ['Privacy Policy', '/privacy'],
+                ['Terms & Conditions', '/terms'],
               ].map(([label, href]) => (
                 <li key={label}>
                   <Link href={href} className="hover:text-emerald-400 transition-colors">{label}</Link>
@@ -85,13 +81,9 @@ export default function SiteFooter() {
               <Input type="email" placeholder="Your email" className="bg-gray-800 border-gray-700 text-gray-100 placeholder:text-gray-500" aria-label="Email for newsletter" />
               <OmniButton type="submit" variant="primary">Subscribe</OmniButton>
             </form>
-            <div className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <Image src="/placeholder.svg?height=40&width=120" alt="App Store" width={120} height={40} className="h-10 w-auto rounded bg-white/5 ring-1 ring-gray-700" />
-                <Image src="/placeholder.svg?height=40&width=120" alt="Google Play" width={120} height={40} className="h-10 w-auto rounded bg-white/5 ring-1 ring-gray-700" />
-              </div>
-              <Link href="/testimonials" className="text-sm text-emerald-400 hover:underline">Customer testimonials</Link>
-            </div>
+            <p className="text-sm text-gray-400">
+              Stay updated with our latest electric vehicles and exclusive offers.
+            </p>
           </div>
         </div>
 

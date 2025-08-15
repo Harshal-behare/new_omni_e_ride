@@ -8,32 +8,24 @@ import { Badge } from '@/components/ui/badge'
 import { Slider } from '@/components/ui/slider'
 import { OmniButton } from '@/components/ui/omni-button'
 import { cn } from '@/lib/utils'
+import { Skeleton } from '@/components/ui/skeleton'
 
 type Dealer = {
   id: string
-  name: string
-  owner: string
-  phone: string
-  email?: string
-  address: string
+  business_name: string
+  business_address: string
+  business_phone: string
+  business_email?: string
   city: string
   state: string
   pincode: string
-  lat: number
-  lng: number
-  rating: number
-  services: Array<'Sales' | 'Service' | 'Spare Parts'>
-  website?: string
-  distanceKm?: number
+  latitude?: number
+  longitude?: number
+  status: string
+  commission_rate?: number
+  approved_at?: string
+  created_at: string
 }
-
-const dealersData: Dealer[] = [
-  { id: 'blr', name: 'Green Wheels Bengaluru', owner: 'Karan S', phone: '+91 98111 22334', address: 'MG Road, Bengaluru 560001', city: 'Bengaluru', state: 'Karnataka', pincode: '560001', lat: 12.9716, lng: 77.5946, rating: 4.8, services: ['Sales', 'Service', 'Spare Parts'], website: '#', distanceKm: 2.4 },
-  { id: 'mum', name: 'EcoRide Mumbai', owner: 'Anita R', phone: '+91 98222 33445', address: 'Bandra West, Mumbai 400050', city: 'Mumbai', state: 'Maharashtra', pincode: '400050', lat: 19.076, lng: 72.8777, rating: 4.6, services: ['Sales', 'Service'], website: '#', distanceKm: 6.1 },
-  { id: 'del', name: 'SmartMove Delhi', owner: 'Rohit G', phone: '+91 98333 44556', address: 'Connaught Place, New Delhi 110001', city: 'Delhi', state: 'Delhi', pincode: '110001', lat: 28.6139, lng: 77.209, rating: 4.7, services: ['Sales', 'Spare Parts'], website: '#', distanceKm: 4.2 },
-  { id: 'hyd', name: 'Volt Mobility Hyderabad', owner: 'Sana P', phone: '+91 98444 55667', address: 'Banjara Hills, Hyderabad 500034', city: 'Hyderabad', state: 'Telangana', pincode: '500034', lat: 17.385, lng: 78.4867, rating: 4.5, services: ['Service', 'Spare Parts'], website: '#', distanceKm: 8.5 },
-  { id: 'ahd', name: 'Urban EV Ahmedabad', owner: 'Arjun P', phone: '+91 98555 66778', address: 'CG Road, Ahmedabad 380009', city: 'Ahmedabad', state: 'Gujarat', pincode: '380009', lat: 23.0225, lng: 72.5714, rating: 4.4, services: ['Sales', 'Service'], website: '#', distanceKm: 3.9 },
-]
 
 // Simple equirectangular projection to place markers within placeholder map bounds (not accurate; replace with Google Maps when available)
 function projectToBox(lat: number, lng: number, bounds = { minLat: 6, maxLat: 37, minLng: 68, maxLng: 97 }) {
@@ -48,13 +40,31 @@ export default function DealerLocations() {
   const [city, setCity] = React.useState('All')
   const [radius, setRadius] = React.useState(25)
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
+  const [dealers, setDealers] = React.useState<Dealer[]>([])
+  const [loading, setLoading] = React.useState(true)
 
-  const filtered = dealersData.filter((d) => {
-    const matchesSearch = [d.name, d.city, d.state, d.address].join(' ').toLowerCase().includes(search.toLowerCase())
-    const matchesService = service === 'All' ? true : d.services.includes(service)
+  React.useEffect(() => {
+    fetchDealers()
+  }, [])
+
+  async function fetchDealers() {
+    try {
+      const response = await fetch('/api/public/dealers')
+      if (response.ok) {
+        const data = await response.json()
+        setDealers(data)
+      }
+    } catch (error) {
+      console.error('Error fetching dealers:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filtered = dealers.filter((d) => {
+    const matchesSearch = [d.business_name, d.city, d.state, d.business_address].join(' ').toLowerCase().includes(search.toLowerCase())
     const matchesCity = city === 'All' ? true : d.city === city
-    const matchesRadius = !d.distanceKm || d.distanceKm <= radius
-    return matchesSearch && matchesService && matchesCity && matchesRadius
+    return matchesSearch && matchesCity
   })
 
   return (
@@ -79,13 +89,14 @@ export default function DealerLocations() {
               />
               {/* Markers (placeholder positioning) */}
               {filtered.map((d) => {
-                const { x, y } = projectToBox(d.lat, d.lng)
+                if (!d.latitude || !d.longitude) return null
+                const { x, y } = projectToBox(d.latitude, d.longitude)
                 const active = selectedId === d.id
                 return (
                   <button
                     key={d.id}
-                    title={d.name}
-                    aria-label={`${d.name}, ${d.city}`}
+                    title={d.business_name}
+                    aria-label={`${d.business_name}, ${d.city}`}
                     onClick={() => setSelectedId(d.id)}
                     className={cn(
                       'absolute -translate-x-1/2 -translate-y-full rounded-full border bg-white p-1.5 shadow-md transition',
@@ -119,7 +130,7 @@ export default function DealerLocations() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All">All Cities</SelectItem>
-                      {[...new Set(dealersData.map((d) => d.city))].map((c) => (
+                      {[...new Set(dealers.map((d) => d.city))].map((c) => (
                         <SelectItem key={c} value={c}>{c}</SelectItem>
                       ))}
                     </SelectContent>
@@ -149,54 +160,65 @@ export default function DealerLocations() {
               </div>
 
               <div className="mt-4 grid gap-3 max-h-[520px] overflow-auto pr-1">
-                {filtered.map((d) => {
-                  const active = selectedId === d.id
-                  return (
-                    <div
-                      key={d.id}
-                      className={cn(
-                        'rounded-lg border p-4 shadow-sm transition hover:shadow-md',
-                        active ? 'border-emerald-600 bg-emerald-50/40' : 'border-gray-200 bg-white'
-                      )}
-                      onMouseEnter={() => setSelectedId(d.id)}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="text-base font-semibold text-emerald-700">{d.name}</div>
-                          <div className="text-sm text-gray-600">Owner: {d.owner}</div>
-                          <div className="mt-1 text-sm text-gray-700">{d.address}</div>
-                          <div className="mt-1 text-xs text-gray-500">Rating: {'★'.repeat(Math.round(d.rating))}{'☆'.repeat(5 - Math.round(d.rating))} ({d.rating.toFixed(1)})</div>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {d.services.map((s) => (
-                              <Badge key={s} className={cn('bg-gray-200 text-gray-800 hover:bg-gray-200', s === 'Sales' && 'bg-emerald-100 text-emerald-700', s === 'Service' && 'bg-blue-100 text-blue-700')}>
-                                {s}
+                {loading ? (
+                  <>
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="rounded-lg border p-4">
+                        <Skeleton className="h-4 w-3/4 mb-2" />
+                        <Skeleton className="h-3 w-1/2 mb-2" />
+                        <Skeleton className="h-3 w-full" />
+                      </div>
+                    ))}
+                  </>
+                ) : filtered.length > 0 ? (
+                  filtered.map((d) => {
+                    const active = selectedId === d.id
+                    return (
+                      <div
+                        key={d.id}
+                        className={cn(
+                          'rounded-lg border p-4 shadow-sm transition hover:shadow-md',
+                          active ? 'border-emerald-600 bg-emerald-50/40' : 'border-gray-200 bg-white'
+                        )}
+                        onMouseEnter={() => setSelectedId(d.id)}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-base font-semibold text-emerald-700">{d.business_name}</div>
+                            <div className="mt-1 text-sm text-gray-700">{d.business_address}</div>
+                            <div className="text-sm text-gray-600">{d.city}, {d.state} - {d.pincode}</div>
+                            {d.commission_rate && (
+                              <div className="mt-1 text-xs text-gray-500">Commission Rate: {d.commission_rate}%</div>
+                            )}
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              <Badge className={cn(
+                                'text-xs',
+                                d.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                              )}>
+                                {d.status}
                               </Badge>
-                            ))}
+                            </div>
                           </div>
                         </div>
-                        <div className="text-right text-sm text-gray-600 min-w-[84px]">
-                          {d.distanceKm ? `${d.distanceKm} KM` : ''}
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <a href={`tel:${d.business_phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm">
+                            <Phone className="h-4 w-4" /> Call Now
+                          </a>
+                          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.business_address)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-sm text-white hover:bg-emerald-700">
+                            <Navigation className="h-4 w-4" /> Get Directions
+                          </a>
+                          {d.business_email && (
+                            <a href={`mailto:${d.business_email}`} className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm hover:bg-gray-100">
+                              <Globe className="h-4 w-4" /> Email
+                            </a>
+                          )}
                         </div>
                       </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <a href={`tel:${d.phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm">
-                          <Phone className="h-4 w-4" /> Call Now
-                        </a>
-                        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.address)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-sm text-white hover:bg-emerald-700">
-                          <Navigation className="h-4 w-4" /> Get Directions
-                        </a>
-                        {d.website && (
-                          <a href={d.website} className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm hover:bg-gray-100">
-                            <Globe className="h-4 w-4" /> Website
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-                {filtered.length === 0 && (
+                    )
+                  })
+                ) : (
                   <div className="rounded-lg border border-gray-200 bg-white p-8 text-center text-gray-600">
-                    No dealers match your filters. Try adjusting them.
+                    No dealers available. Please check back later.
                   </div>
                 )}
               </div>

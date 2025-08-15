@@ -163,33 +163,41 @@ export default function DealerApplicationPage() {
               </div>
 
               <div className="border-t pt-4">
-                <h3 className="font-semibold mb-3">Company Information</h3>
+                <h3 className="font-semibold mb-3">Business Information</h3>
                 <div className="grid gap-3 md:grid-cols-2 text-sm">
                   <div>
-                    <span className="text-gray-600">Company Name:</span>
-                    <p className="font-medium">{existingApplication.company_name}</p>
+                    <span className="text-gray-600">Business Name:</span>
+                    <p className="font-medium">{existingApplication.business_name}</p>
                   </div>
                   <div>
-                    <span className="text-gray-600">Registration Number:</span>
-                    <p className="font-medium">{existingApplication.business_registration_number}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Contact:</span>
-                    <p className="font-medium">{existingApplication.contact_name}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-600">Email:</span>
-                    <p className="font-medium">{existingApplication.contact_email}</p>
+                    <span className="text-gray-600">Business Type:</span>
+                    <p className="font-medium">{existingApplication.business_type}</p>
                   </div>
                   <div>
                     <span className="text-gray-600">Phone:</span>
-                    <p className="font-medium">{existingApplication.contact_phone}</p>
+                    <p className="font-medium">{existingApplication.business_phone}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Email:</span>
+                    <p className="font-medium">{existingApplication.business_email || 'Not provided'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">GST Number:</span>
+                    <p className="font-medium">{existingApplication.gst_number || 'Not provided'}</p>
                   </div>
                   <div>
                     <span className="text-gray-600">Location:</span>
                     <p className="font-medium">
-                      {existingApplication.city}, {existingApplication.state_province}
+                      {existingApplication.city}, {existingApplication.state} - {existingApplication.pincode}
                     </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Experience:</span>
+                    <p className="font-medium">{existingApplication.experience_years} years</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Investment Capacity:</span>
+                    <p className="font-medium">{existingApplication.investment_capacity}</p>
                   </div>
                 </div>
               </div>

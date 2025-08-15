@@ -58,7 +58,7 @@ export default function NewTestRidePage() {
     try {
       await bookTestRide({
         vehicle_id: selectedVehicle,
-        dealer_id: selectedDealer || undefined,
+        dealer_id: selectedDealer && selectedDealer !== 'any' ? selectedDealer : undefined,
         scheduled_date: selectedDate,
         scheduled_time: selectedTime,
         notes: notes || undefined
@@ -160,7 +160,7 @@ export default function NewTestRidePage() {
                   <SelectValue placeholder="Select a dealer (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Any Available Dealer</SelectItem>
+                  <SelectItem value="any">Any Available Dealer</SelectItem>
                   {dealers.map(dealer => (
                     <SelectItem key={dealer.id} value={dealer.id}>
                       <div>

@@ -12,41 +12,31 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Upload, X, FileText, CheckCircle } from 'lucide-react'
 
 interface DealerApplicationFormData {
-  // Company Information
-  company_name: string
-  business_registration_number: string
-  tax_id: string
-  
-  // Contact Information
-  contact_name: string
-  contact_email: string
-  contact_phone: string
-  
-  // Address
-  address_line1: string
-  address_line2: string
+  // Business Information
+  business_name: string
+  business_type: string
+  business_address: string
   city: string
-  state_province: string
-  postal_code: string
-  country: string
+  state: string
+  pincode: string
+  business_phone: string
+  business_email: string
+  gst_number: string
+  pan_number: string
+  aadhar_number: string
   
-  // Business Details
-  years_in_business: number
-  annual_revenue: string
-  existing_brands: string[]
-  showroom_size_sqft: number
-  number_of_employees: number
-  website_url: string
+  // Experience & Background
+  current_business: string
+  experience_years: number
+  investment_capacity: string
+  preferred_areas: string[]
+  why_partner: string
   
   // Documents
-  business_license_url?: string
-  tax_certificate_url?: string
-  bank_statement_url?: string
-  additional_documents?: string[]
+  documents?: any
   
   // Agreement
   terms_accepted: boolean
-  notes: string
 }
 
 export function DealerApplicationForm() {
@@ -57,26 +47,23 @@ export function DealerApplicationForm() {
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set())
   
   const [formData, setFormData] = useState<DealerApplicationFormData>({
-    company_name: '',
-    business_registration_number: '',
-    tax_id: '',
-    contact_name: '',
-    contact_email: '',
-    contact_phone: '',
-    address_line1: '',
-    address_line2: '',
+    business_name: '',
+    business_type: '',
+    business_address: '',
     city: '',
-    state_province: '',
-    postal_code: '',
-    country: 'USA',
-    years_in_business: 0,
-    annual_revenue: '',
-    existing_brands: [],
-    showroom_size_sqft: 0,
-    number_of_employees: 0,
-    website_url: '',
-    terms_accepted: false,
-    notes: ''
+    state: '',
+    pincode: '',
+    business_phone: '',
+    business_email: '',
+    gst_number: '',
+    pan_number: '',
+    aadhar_number: '',
+    current_business: '',
+    experience_years: 0,
+    investment_capacity: '',
+    preferred_areas: [],
+    why_partner: '',
+    terms_accepted: false
   })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -141,23 +128,12 @@ export function DealerApplicationForm() {
     setError(null)
 
     try {
-      // Process existing brands from comma-separated string to array
-      const processedData = {
-        ...formData,
-        existing_brands: formData.existing_brands.length > 0 
-          ? formData.existing_brands 
-          : (document.getElementById('existing_brands') as HTMLInputElement)?.value
-              .split(',')
-              .map(b => b.trim())
-              .filter(b => b.length > 0) || []
-      }
-
       const response = await fetch('/api/dealers/apply', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(processedData)
+        body: JSON.stringify(formData)
       })
 
       if (!response.ok) {
@@ -204,126 +180,88 @@ export function DealerApplicationForm() {
         </Alert>
       )}
 
-      {/* Company Information */}
+      {/* Business Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Company Information</CardTitle>
+          <CardTitle>Business Information</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <Label htmlFor="company_name">Company Name *</Label>
+              <Label htmlFor="business_name">Business Name *</Label>
               <Input
-                id="company_name"
-                name="company_name"
-                value={formData.company_name}
+                id="business_name"
+                name="business_name"
+                value={formData.business_name}
                 onChange={handleInputChange}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="business_registration_number">Business Registration Number *</Label>
-              <Input
-                id="business_registration_number"
-                name="business_registration_number"
-                value={formData.business_registration_number}
-                onChange={handleInputChange}
+              <Label htmlFor="business_type">Business Type *</Label>
+              <select
+                id="business_type"
+                name="business_type"
+                value={formData.business_type}
+                onChange={(e) => setFormData(prev => ({ ...prev, business_type: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-md"
                 required
-              />
+              >
+                <option value="">Select business type</option>
+                <option value="Sole Proprietorship">Sole Proprietorship</option>
+                <option value="Partnership">Partnership</option>
+                <option value="Private Limited Company">Private Limited Company</option>
+                <option value="Public Limited Company">Public Limited Company</option>
+                <option value="Limited Liability Partnership">Limited Liability Partnership</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
             <div>
-              <Label htmlFor="tax_id">Tax ID</Label>
+              <Label htmlFor="business_phone">Business Phone *</Label>
               <Input
-                id="tax_id"
-                name="tax_id"
-                value={formData.tax_id}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="website_url">Website URL</Label>
-              <Input
-                id="website_url"
-                name="website_url"
-                type="url"
-                value={formData.website_url}
-                onChange={handleInputChange}
-                placeholder="https://example.com"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Contact Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Contact Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            <div>
-              <Label htmlFor="contact_name">Contact Name *</Label>
-              <Input
-                id="contact_name"
-                name="contact_name"
-                value={formData.contact_name}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="contact_email">Contact Email *</Label>
-              <Input
-                id="contact_email"
-                name="contact_email"
-                type="email"
-                value={formData.contact_email}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="contact_phone">Contact Phone *</Label>
-              <Input
-                id="contact_phone"
-                name="contact_phone"
+                id="business_phone"
+                name="business_phone"
                 type="tel"
-                value={formData.contact_phone}
+                value={formData.business_phone}
                 onChange={handleInputChange}
+                placeholder="+91 98765 43210"
                 required
+              />
+            </div>
+            <div>
+              <Label htmlFor="business_email">Business Email</Label>
+              <Input
+                id="business_email"
+                name="business_email"
+                type="email"
+                value={formData.business_email}
+                onChange={handleInputChange}
+                placeholder="business@example.com"
               />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Address */}
+      {/* Business Address */}
       <Card>
         <CardHeader>
           <CardTitle>Business Address</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="address_line1">Address Line 1 *</Label>
-            <Input
-              id="address_line1"
-              name="address_line1"
-              value={formData.address_line1}
+            <Label htmlFor="business_address">Complete Business Address *</Label>
+            <Textarea
+              id="business_address"
+              name="business_address"
+              value={formData.business_address}
               onChange={handleInputChange}
+              placeholder="Enter your complete business address"
+              rows={3}
               required
             />
           </div>
-          <div>
-            <Label htmlFor="address_line2">Address Line 2</Label>
-            <Input
-              id="address_line2"
-              name="address_line2"
-              value={formData.address_line2}
-              onChange={handleInputChange}
-            />
-          </div>
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-3">
             <div>
               <Label htmlFor="city">City *</Label>
               <Input
@@ -335,32 +273,24 @@ export function DealerApplicationForm() {
               />
             </div>
             <div>
-              <Label htmlFor="state_province">State/Province *</Label>
+              <Label htmlFor="state">State *</Label>
               <Input
-                id="state_province"
-                name="state_province"
-                value={formData.state_province}
+                id="state"
+                name="state"
+                value={formData.state}
                 onChange={handleInputChange}
                 required
               />
             </div>
             <div>
-              <Label htmlFor="postal_code">Postal Code *</Label>
+              <Label htmlFor="pincode">Pincode *</Label>
               <Input
-                id="postal_code"
-                name="postal_code"
-                value={formData.postal_code}
+                id="pincode"
+                name="pincode"
+                value={formData.pincode}
                 onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="country">Country *</Label>
-              <Input
-                id="country"
-                name="country"
-                value={formData.country}
-                onChange={handleInputChange}
+                pattern="[0-9]{6}"
+                placeholder="123456"
                 required
               />
             </div>
@@ -368,70 +298,124 @@ export function DealerApplicationForm() {
         </CardContent>
       </Card>
 
-      {/* Business Details */}
+      {/* Legal Documents */}
       <Card>
         <CardHeader>
-          <CardTitle>Business Details</CardTitle>
+          <CardTitle>Legal Documents</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <Label htmlFor="years_in_business">Years in Business</Label>
+              <Label htmlFor="gst_number">GST Number</Label>
               <Input
-                id="years_in_business"
-                name="years_in_business"
-                type="number"
-                value={formData.years_in_business}
+                id="gst_number"
+                name="gst_number"
+                value={formData.gst_number}
                 onChange={handleInputChange}
-                min="0"
+                placeholder="22AAAAA0000A1Z5"
+                pattern="[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}"
               />
             </div>
             <div>
-              <Label htmlFor="annual_revenue">Annual Revenue Range</Label>
-              <select
-                id="annual_revenue"
-                name="annual_revenue"
-                value={formData.annual_revenue}
-                onChange={(e) => setFormData(prev => ({ ...prev, annual_revenue: e.target.value }))}
-                className="w-full px-3 py-2 border rounded-md"
-              >
-                <option value="">Select range</option>
-                <option value="< $100K">Less than $100K</option>
-                <option value="$100K - $500K">$100K - $500K</option>
-                <option value="$500K - $1M">$500K - $1M</option>
-                <option value="$1M - $5M">$1M - $5M</option>
-                <option value="> $5M">More than $5M</option>
-              </select>
-            </div>
-            <div>
-              <Label htmlFor="showroom_size_sqft">Showroom Size (sq ft)</Label>
+              <Label htmlFor="pan_number">PAN Number</Label>
               <Input
-                id="showroom_size_sqft"
-                name="showroom_size_sqft"
-                type="number"
-                value={formData.showroom_size_sqft}
+                id="pan_number"
+                name="pan_number"
+                value={formData.pan_number}
                 onChange={handleInputChange}
-                min="0"
+                placeholder="ABCDE1234F"
+                pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}"
               />
             </div>
             <div>
-              <Label htmlFor="number_of_employees">Number of Employees</Label>
+              <Label htmlFor="aadhar_number">Aadhar Number</Label>
               <Input
-                id="number_of_employees"
-                name="number_of_employees"
-                type="number"
-                value={formData.number_of_employees}
+                id="aadhar_number"
+                name="aadhar_number"
+                value={formData.aadhar_number}
                 onChange={handleInputChange}
-                min="0"
+                placeholder="1234 5678 9012"
+                pattern="[0-9]{4}\s[0-9]{4}\s[0-9]{4}"
               />
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Experience & Background */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Experience & Background</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="existing_brands">Existing Brands (comma-separated)</Label>
+            <Label htmlFor="current_business">Current Business Details *</Label>
+            <Textarea
+              id="current_business"
+              name="current_business"
+              value={formData.current_business}
+              onChange={handleInputChange}
+              placeholder="Describe your current business, products/services offered, target market, etc."
+              rows={3}
+              required
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label htmlFor="experience_years">Years of Experience in Business *</Label>
+              <Input
+                id="experience_years"
+                name="experience_years"
+                type="number"
+                value={formData.experience_years}
+                onChange={handleInputChange}
+                min="0"
+                max="50"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="investment_capacity">Investment Capacity *</Label>
+              <select
+                id="investment_capacity"
+                name="investment_capacity"
+                value={formData.investment_capacity}
+                onChange={(e) => setFormData(prev => ({ ...prev, investment_capacity: e.target.value }))}
+                className="w-full px-3 py-2 border rounded-md"
+                required
+              >
+                <option value="">Select investment range</option>
+                <option value="₹1-5 Lakhs">₹1-5 Lakhs</option>
+                <option value="₹5-10 Lakhs">₹5-10 Lakhs</option>
+                <option value="₹10-25 Lakhs">₹10-25 Lakhs</option>
+                <option value="₹25-50 Lakhs">₹25-50 Lakhs</option>
+                <option value="₹50 Lakhs+">₹50 Lakhs+</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="preferred_areas">Preferred Areas for Dealership (comma-separated)</Label>
             <Input
-              id="existing_brands"
-              name="existing_brands"
-              placeholder="Brand1, Brand2, Brand3"
+              id="preferred_areas"
+              name="preferred_areas"
+              value={formData.preferred_areas.join(', ')}
+              onChange={(e) => setFormData(prev => ({ 
+                ...prev, 
+                preferred_areas: e.target.value.split(',').map(area => area.trim()).filter(area => area.length > 0)
+              }))}
+              placeholder="Area1, Area2, Area3"
+            />
+          </div>
+          <div>
+            <Label htmlFor="why_partner">Why do you want to partner with OMNI? *</Label>
+            <Textarea
+              id="why_partner"
+              name="why_partner"
+              value={formData.why_partner}
+              onChange={handleInputChange}
+              placeholder="Explain your motivation for becoming an OMNI dealer and how you plan to contribute to our growth..."
+              rows={4}
+              required
             />
           </div>
         </CardContent>

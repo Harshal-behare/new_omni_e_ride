@@ -43,9 +43,11 @@ CREATE TABLE public.dealer_applications (
   rejection_reason text,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
+  terms_accepted boolean NOT NULL DEFAULT false,
+  terms_accepted_at timestamp with time zone,
   CONSTRAINT dealer_applications_pkey PRIMARY KEY (id),
-  CONSTRAINT dealer_applications_reviewed_by_fkey FOREIGN KEY (reviewed_by) REFERENCES public.profiles(id),
-  CONSTRAINT dealer_applications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+  CONSTRAINT dealer_applications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT dealer_applications_reviewed_by_fkey FOREIGN KEY (reviewed_by) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.dealers (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -96,9 +98,9 @@ CREATE TABLE public.leads (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT leads_pkey PRIMARY KEY (id),
-  CONSTRAINT leads_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.profiles(id),
+  CONSTRAINT leads_dealer_id_fkey FOREIGN KEY (dealer_id) REFERENCES public.dealers(id),
   CONSTRAINT leads_vehicle_interested_fkey FOREIGN KEY (vehicle_interested) REFERENCES public.vehicles(id),
-  CONSTRAINT leads_dealer_id_fkey FOREIGN KEY (dealer_id) REFERENCES public.dealers(id)
+  CONSTRAINT leads_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.notifications (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -141,8 +143,8 @@ CREATE TABLE public.orders (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT orders_pkey PRIMARY KEY (id),
-  CONSTRAINT orders_dealer_id_fkey FOREIGN KEY (dealer_id) REFERENCES public.dealers(id),
   CONSTRAINT orders_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT orders_dealer_id_fkey FOREIGN KEY (dealer_id) REFERENCES public.dealers(id),
   CONSTRAINT orders_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehicles(id)
 );
 CREATE TABLE public.payments (
@@ -166,8 +168,8 @@ CREATE TABLE public.payments (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT payments_pkey PRIMARY KEY (id),
-  CONSTRAINT payments_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id),
-  CONSTRAINT payments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+  CONSTRAINT payments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT payments_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id)
 );
 CREATE TABLE public.profiles (
   id uuid NOT NULL,
@@ -213,9 +215,9 @@ CREATE TABLE public.test_rides (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT test_rides_pkey PRIMARY KEY (id),
-  CONSTRAINT test_rides_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT test_rides_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehicles(id),
   CONSTRAINT test_rides_dealer_id_fkey FOREIGN KEY (dealer_id) REFERENCES public.dealers(id),
-  CONSTRAINT test_rides_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehicles(id)
+  CONSTRAINT test_rides_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.vehicles (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -255,7 +257,7 @@ CREATE TABLE public.warranties (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT warranties_pkey PRIMARY KEY (id),
-  CONSTRAINT warranties_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id),
   CONSTRAINT warranties_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
-  CONSTRAINT warranties_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehicles(id)
+  CONSTRAINT warranties_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehicles(id),
+  CONSTRAINT warranties_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id)
 );

@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import Image from 'next/image'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -160,11 +161,15 @@ export default function TestRidesPage() {
                   <div className="flex gap-4">
                     {/* Vehicle Image */}
                     {ride.vehicle?.images?.[0] && (
-                      <img
-                        src={ride.vehicle.images[0]}
-                        alt={ride.vehicle.name}
-                        className="w-24 h-24 object-cover rounded-lg"
-                      />
+                      <div className="relative w-24 h-24 rounded-lg overflow-hidden">
+                        <Image
+                          src={ride.vehicle.images[0]}
+                          alt={ride.vehicle.name || 'Vehicle'}
+                          fill
+                          sizes="96px"
+                          className="object-cover"
+                        />
+                      </div>
                     )}
                     
                     {/* Ride Details */}

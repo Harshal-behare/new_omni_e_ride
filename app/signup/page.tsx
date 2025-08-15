@@ -22,6 +22,7 @@ export default function SignupPage() {
   const router = useRouter()
   const { signup } = useAuth()
   const [error, setError] = React.useState<string | null>(null)
+  const [success, setSuccess] = React.useState<string | null>(null)
   const [loading, setLoading] = React.useState(false)
   const [testRideModel, setTestRideModel] = React.useState<string | null>(null)
   const c = useForm<CustomerForm>()
@@ -55,7 +56,10 @@ export default function SignupPage() {
         email: data.email,
         password: data.password,
         name: data.name,
-        role: 'customer' // Default to customer role
+        role: 'customer', // Default to customer role
+        phone: data.phone,
+        city: data.city,
+        pincode: data.pin
       })
       
       if (!result.ok) {
@@ -69,12 +73,16 @@ export default function SignupPage() {
       if (redirectInfo) {
         const { slug } = JSON.parse(redirectInfo)
         sessionStorage.removeItem('testRideRedirect')
-        alert("Registration successful! Redirecting to book your test ride...")
-        router.push(`/test-rides/book?model=${slug}`)
+        setSuccess("Registration successful! Redirecting to book your test ride...")
+        setTimeout(() => {
+          router.push(`/test-rides/book?model=${slug}`)
+        }, 2000)
       } else {
         // Show success message and redirect to login
-        alert("Registration successful! Please check your email to verify your account.")
-        router.push('/login')
+        setSuccess("Registration successful! Please check your email to verify your account.")
+        setTimeout(() => {
+          router.push('/login')
+        }, 2000)
       }
     } catch (err) {
       setError("An unexpected error occurred")
@@ -147,7 +155,12 @@ export default function SignupPage() {
               {error}
             </div>
           )}
-          <OmniButton type="submit" disabled={loading}>
+          {success && (
+            <div className="rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">
+              {success}
+            </div>
+          )}
+          <OmniButton type="submit" disabled={loading || !!success}>
             {loading ? "Creating Account..." : "Create Account"}
           </OmniButton>
           <p className="text-sm text-gray-700">

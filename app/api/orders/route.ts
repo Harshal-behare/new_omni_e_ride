@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
         ),
         dealers (
           id,
-          name,
+          business_name,
           city
         ),
         profiles (
@@ -53,11 +53,11 @@ export async function GET(request: NextRequest) {
     if (profile?.role === 'customer') {
       query = query.eq('user_id', user.id)
     } else if (profile?.role === 'dealer') {
-      // Get dealer ID
+      // Get dealer ID using user_id
       const { data: dealer } = await supabase
         .from('dealers')
         .select('id')
-        .eq('email', user.email!)
+        .eq('user_id', user.id)
         .single()
       
       if (dealer) {
@@ -193,6 +193,7 @@ export async function POST(request: NextRequest) {
         quantity: quantity,
         unit_price: vehicle.price,
         total_amount: totalAmount,
+        final_amount: totalAmount, // Required field
         status: 'pending',
         payment_status: 'pending',
         shipping_address: shippingAddress,
@@ -225,22 +226,25 @@ export async function POST(request: NextRequest) {
         payment_capture: true
       })
       
-      // Update order with Razorpay order ID
-      const { data: updatedOrder, error: updateError } = await supabase
-        .from('orders')
-        .update({
+      // Note: Razorpay order ID is stored in payments table, not orders table
+      // Create payment record for this order
+      const { error: paymentError } = await supabase
+        .from('payments')
+        .insert({
+          order_id: order.id,
+          user_id: user.id,
+          amount: totalAmount,
+          status: 'pending',
+          method: 'razorpay',
           razorpay_order_id: razorpayOrder.id
         })
-        .eq('id', order.id)
-        .select()
-        .single()
       
-      if (updateError) {
-        console.error('Error updating order with Razorpay ID:', updateError)
+      if (paymentError) {
+        console.error('Error creating payment record:', paymentError)
       }
       
       return NextResponse.json({
-        order: updatedOrder || order,
+        order: order,
         razorpay_order: {
           id: razorpayOrder.id,
           amount: razorpayOrder.amount,
@@ -299,15 +303,12 @@ export async function PUT(request: NextRequest) {
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .update({
-        payment_status: 'paid',
+        payment_status: 'completed',
         status: 'confirmed',
-        payment_method: body.payment_method || 'card',
-        razorpay_payment_id: body.razorpay_payment_id,
-        razorpay_signature: body.razorpay_signature,
+        payment_method: 'razorpay',
         updated_at: new Date().toISOString()
       })
       .eq('id', body.order_id)
-      .eq('razorpay_order_id', body.razorpay_order_id)
       .select()
       .single()
     

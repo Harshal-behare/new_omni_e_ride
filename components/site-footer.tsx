@@ -56,7 +56,6 @@ export default function SiteFooter() {
             <ul className="grid gap-2 text-sm">
               {[
                 ['Contact Us', '/contact'],
-                ['FAQ', '/faq'],
                 ['Warranty', '/warranty'],
                 ['Privacy Policy', '/privacy'],
                 ['Terms & Conditions', '/terms'],

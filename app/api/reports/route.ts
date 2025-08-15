@@ -279,9 +279,9 @@ async function generateTestRidesReport(supabase: any, startDate: Date, endDate: 
 
     const summary = {
       totalTestRides: testRides?.length || 0,
-      completedTestRides: testRides?.filter(ride => ride.status === 'completed').length || 0,
-      scheduledTestRides: testRides?.filter(ride => ride.status === 'scheduled').length || 0,
-      cancelledTestRides: testRides?.filter(ride => ride.status === 'cancelled').length || 0,
+      completedTestRides: testRides?.filter((ride: any) => ride.status === 'completed').length || 0,
+      scheduledTestRides: testRides?.filter((ride: any) => ride.status === 'scheduled').length || 0,
+      cancelledTestRides: testRides?.filter((ride: any) => ride.status === 'cancelled').length || 0,
       testRidesByStatus: groupByField(testRides || [], 'status'),
       testRidesByDealer: groupByField(testRides || [], 'dealers.business_name'),
       testRidesByDate: groupByDate(testRides || [])
@@ -318,12 +318,12 @@ async function generateDealersReport(supabase: any, startDate: Date, endDate: Da
 
     const summary = {
       totalDealers: dealers?.length || 0,
-      activeDealers: dealers?.filter(dealer => dealer.status === 'active').length || 0,
-      pendingDealers: dealers?.filter(dealer => dealer.status === 'pending').length || 0,
+      activeDealers: dealers?.filter((dealer: any) => dealer.status === 'active').length || 0,
+      pendingDealers: dealers?.filter((dealer: any) => dealer.status === 'pending').length || 0,
       dealersByState: groupByField(dealers || [], 'state'),
       dealersByStatus: groupByField(dealers || [], 'status'),
       averageCommissionRate: dealers?.length ? 
-        dealers.reduce((sum, dealer) => sum + (dealer.commission_rate || 0), 0) / dealers.length : 0
+        dealers.reduce((sum: number, dealer: any) => sum + (dealer.commission_rate || 0), 0) / dealers.length : 0
     }
 
     return {
@@ -337,7 +337,7 @@ async function generateDealersReport(supabase: any, startDate: Date, endDate: Da
 }
 
 function getTopItems(data: any[], objectKey: string, valueKey: string, limit = 5) {
-  const counts = data.reduce((acc, item) => {
+  const counts = data.reduce((acc: Record<string, number>, item: any) => {
     const value = item[objectKey]?.[valueKey] || 'Unknown'
     acc[value] = (acc[value] || 0) + 1
     return acc
@@ -350,9 +350,9 @@ function getTopItems(data: any[], objectKey: string, valueKey: string, limit = 5
 }
 
 function groupByField(data: any[], field: string) {
-  return data.reduce((acc, item) => {
+  return data.reduce((acc: Record<string, number>, item: any) => {
     const value = field.includes('.') ? 
-      field.split('.').reduce((obj, key) => obj?.[key], item) : 
+      field.split('.').reduce((obj: any, key: string) => obj?.[key], item) :
       item[field]
     const key = value || 'Unknown'
     acc[key] = (acc[key] || 0) + 1
@@ -361,7 +361,7 @@ function groupByField(data: any[], field: string) {
 }
 
 function groupByDate(data: any[], dateField = 'created_at') {
-  return data.reduce((acc, item) => {
+  return data.reduce((acc: Record<string, number>, item: any) => {
     const date = new Date(item[dateField]).toISOString().split('T')[0]
     acc[date] = (acc[date] || 0) + 1
     return acc
@@ -374,8 +374,8 @@ function convertToCSV(data: any[]): string {
   const headers = Object.keys(data[0])
   const csvContent = [
     headers.join(','),
-    ...data.map(row => 
-      headers.map(header => {
+    ...data.map((row: any) => 
+      headers.map((header: string) => {
         const value = row[header]
         if (typeof value === 'object' && value !== null) {
           return `"${JSON.stringify(value).replace(/"/g, '""')}"`

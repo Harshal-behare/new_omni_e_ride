@@ -34,6 +34,12 @@ interface DealerApplicationFormData {
   
   // Documents
   documents?: any
+  business_license_url?: string
+  tax_certificate_url?: string
+  bank_statement_url?: string
+  
+  // Additional
+  notes?: string
   
   // Agreement
   terms_accepted: boolean

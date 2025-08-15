@@ -234,8 +234,8 @@ async function generateInventoryReport(supabase: any, dealerId?: string | null, 
 
     const summary = {
       totalItems: inventory?.length || 0,
-      totalQuantity: inventory?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0,
-      totalReserved: inventory?.reduce((sum, item) => sum + (item.reserved_quantity || 0), 0) || 0,
+      totalQuantity: inventory?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0,
+      totalReserved: inventory?.reduce((sum: number, item: any) => sum + (item.reserved_quantity || 0), 0) || 0,
       lowStockItems: inventory?.filter(item => (item.quantity || 0) < 10).length || 0,
       inventoryByStatus: groupByField(inventory || [], 'status'),
       inventoryByDealer: groupByField(inventory || [], 'dealers.business_name'),

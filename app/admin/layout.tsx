@@ -2,25 +2,47 @@
 
 import * as React from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { RoleGate } from '@/components/auth/role-gate'
 import { OmniButton } from '@/components/ui/omni-button'
-import { Home, Users, Shield, Building2, Package, ShoppingCart, ClipboardList, Menu, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Home, Users, Shield, Building2, Package, ShoppingCart, ClipboardList, Menu, ChevronLeft, ChevronRight, UserCheck, LogOut } from 'lucide-react'
 import { useDemoAuth } from '@/components/auth/demo-auth-provider'
 import { cn } from '@/lib/utils'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { toast } from 'react-hot-toast'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const { logout } = useDemoAuth()
   const [collapsed, setCollapsed] = React.useState(false)
+  const [loggingOut, setLoggingOut] = React.useState(false)
+  
+  const handleLogout = async () => {
+    try {
+      setLoggingOut(true)
+      toast.loading('Logging out...')
+      await logout()
+      toast.dismiss()
+      toast.success('Logged out successfully')
+      router.push('/login')
+    } catch (error) {
+      console.error('Logout error:', error)
+      toast.dismiss()
+      toast.error('Failed to logout. Please try again.')
+    } finally {
+      setLoggingOut(false)
+    }
+  }
+  
   const items = [
     { href: '/admin', icon: <Home className="h-5 w-5" />, label: 'Overview' },
     { href: '/admin/users', icon: <Users className="h-5 w-5" />, label: 'Users' },
     { href: '/admin/warranties', icon: <Shield className="h-5 w-5" />, label: 'Warranties' },
     { href: '/admin/dealer-applications', icon: <ClipboardList className="h-5 w-5" />, label: 'Dealer Applications' },
     { href: '/admin/dealers', icon: <Building2 className="h-5 w-5" />, label: 'Dealers' },
-    { href: '/admin/products', icon: <Package className="h-5 w-5" />, label: 'Products' },
+    { href: '/admin/vehicles', icon: <Package className="h-5 w-5" />, label: 'Vehicles' },
+    { href: '/admin/leads', icon: <UserCheck className="h-5 w-5" />, label: 'Leads' },
     { href: '/admin/orders', icon: <ShoppingCart className="h-5 w-5" />, label: 'Orders' },
   ]
   return (
@@ -41,7 +63,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </button>
             <Link href="/" className="ml-2 font-bold text-emerald-700">OMNI E-RIDE</Link>
           </div>
-          <OmniButton variant="outline" size="sm" onClick={logout}>Logout</OmniButton>
+          <OmniButton 
+            variant="outline" 
+            size="sm" 
+            onClick={handleLogout}
+            disabled={loggingOut}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            {loggingOut ? 'Logging out...' : 'Logout'}
+          </OmniButton>
         </div>
       </header>
 

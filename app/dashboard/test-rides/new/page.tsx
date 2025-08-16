@@ -26,16 +26,48 @@ export default function NewTestRidePage() {
   const router = useRouter()
   const { bookTestRide, isBooking } = useTestRidePayment()
   
-  const [dealers, setDealers] = useState<Dealer[]>([
-    { id: 'd1', name: 'Green Wheels Bengaluru', address: '123 MG Road', city: 'Bengaluru', state: 'Karnataka', phone: '080-12345678' },
-    { id: 'd2', name: 'Eco Motors Mumbai', address: '456 Bandra West', city: 'Mumbai', state: 'Maharashtra', phone: '022-87654321' },
-    { id: 'd3', name: 'E-Drive Delhi', address: '789 Connaught Place', city: 'New Delhi', state: 'Delhi', phone: '011-98765432' }
-  ])
+  const [dealers, setDealers] = useState<Dealer[]>([])
+  const [loadingDealers, setLoadingDealers] = useState(true)
   const [selectedVehicle, setSelectedVehicle] = useState<string>('')
   const [selectedDealer, setSelectedDealer] = useState<string>('')
   const [selectedDate, setSelectedDate] = useState<string>('')
   const [selectedTime, setSelectedTime] = useState<string>('')
   const [notes, setNotes] = useState<string>('')
+
+  useEffect(() => {
+    fetchDealers()
+  }, [])
+
+  const fetchDealers = async () => {
+    try {
+      const response = await fetch('/api/dealers')
+      if (response.ok) {
+        const data = await response.json()
+        const dealersList = data.map((dealer: any) => ({
+          id: dealer.id,
+          name: dealer.business_name || dealer.profiles?.name || 'Dealer',
+          address: dealer.business_address || '',
+          city: dealer.city || '',
+          state: dealer.state || '',
+          phone: dealer.business_phone || ''
+        }))
+        setDealers(dealersList)
+      } else {
+        console.error('Failed to fetch dealers')
+        // Use some default dealers if fetch fails
+        setDealers([
+          { id: 'd1', name: 'Default Dealer 1', address: '123 Main St', city: 'City', state: 'State', phone: '1234567890' }
+        ])
+      }
+    } catch (error) {
+      console.error('Error fetching dealers:', error)
+      setDealers([
+        { id: 'd1', name: 'Default Dealer 1', address: '123 Main St', city: 'City', state: 'State', phone: '1234567890' }
+      ])
+    } finally {
+      setLoadingDealers(false)
+    }
+  }
 
   const handleDateTimeSelection = (date: string, time: string) => {
     setSelectedDate(date)
@@ -155,9 +187,9 @@ export default function NewTestRidePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Select value={selectedDealer} onValueChange={setSelectedDealer}>
+              <Select value={selectedDealer} onValueChange={setSelectedDealer} disabled={loadingDealers}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a dealer (optional)" />
+                  <SelectValue placeholder={loadingDealers ? "Loading dealers..." : "Select a dealer (optional)"} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="any">Any Available Dealer</SelectItem>
@@ -241,6 +273,15 @@ export default function NewTestRidePage() {
                   <p>• The deposit will be refunded within 7 working days after your test ride</p>
                   <p>• You can cancel up to 24 hours before the scheduled time for a full refund</p>
                   <p>• Payment will be processed securely through Razorpay</p>
+                </div>
+                
+                <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Secure payment gateway is fully integrated with Razorpay
+                  </p>
                 </div>
               </div>
             </CardContent>

@@ -22,7 +22,8 @@ interface TestRideData {
   }
   scheduled_date: string
   scheduled_time: string
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'rejected'
+  rejection_reason?: string
   payment_status: 'pending' | 'paid' | 'refunded'
   payment_amount: number
 }
@@ -87,6 +88,7 @@ export default function TestRidesPage() {
       case 'pending': return 'bg-yellow-100 text-yellow-800'
       case 'completed': return 'bg-blue-100 text-blue-800'
       case 'cancelled': return 'bg-red-100 text-red-800'
+      case 'rejected': return 'bg-red-100 text-red-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -206,6 +208,14 @@ export default function TestRidesPage() {
                           Payment {ride.payment_status.charAt(0).toUpperCase() + ride.payment_status.slice(1)}
                         </Badge>
                       </div>
+                      
+                      {ride.status === 'rejected' && ride.rejection_reason && (
+                        <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
+                          <p className="text-sm text-red-700">
+                            <span className="font-medium">Rejection Reason:</span> {ride.rejection_reason}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                   

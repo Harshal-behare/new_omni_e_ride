@@ -194,7 +194,36 @@ export async function getAvailableSlots(
 ): Promise<AvailableSlot[]> {
   const supabase = await createClient()
   
-  // Define available time slots (9 AM to 6 PM, hourly slots)
+  // If dealer specified, check their availability first
+  if (dealerId) {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/dealer/availability/check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dealerId, date })
+      })
+      
+      if (response.ok) {
+        const availabilityData = await response.json()
+        if (!availabilityData.available) {
+          return [] // Dealer not available on this date
+        }
+        
+        // Use dealer's custom slots
+        const dealerSlots = availabilityData.slots.map((slot: any) => ({
+          date,
+          time: slot.time,
+          available: slot.available > 0
+        }))
+        
+        return dealerSlots
+      }
+    } catch (error) {
+      console.error('Error checking dealer availability:', error)
+    }
+  }
+  
+  // Default slots if no dealer specified or error
   const allSlots = [
     '09:00', '10:00', '11:00', '12:00',
     '14:00', '15:00', '16:00', '17:00', '18:00'

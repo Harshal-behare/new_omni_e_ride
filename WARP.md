@@ -21,8 +21,9 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ### Current Status
 - **Build Status:** ✅ Successful
-- **Progress:** 90% complete, ready for database setup
+- **Progress:** 95% complete, all major features implemented
 - **Production Ready:** Yes, pending final environment configuration
+- **Recent Updates:** Fixed all build errors, implemented leads management, enhanced logout functionality
 
 ---
 
@@ -199,10 +200,11 @@ supabase db reset
 - **vehicles** - Product catalog with specifications and images
 - **orders** - Order management with auto-generated order numbers
 - **payments** - Payment tracking (Razorpay integration)
-- **dealers** - Dealer network information
-- **dealer_applications** - Dealer application workflow (includes terms_accepted, documents JSONB)
+- **dealers** - Dealer network information (created when dealer application is approved)
+- **dealer_applications** - Dealer application workflow (includes terms_accepted, documents array)
+- **dealer_metrics** - Dealer performance metrics and statistics
 - **test_rides** - Test ride bookings with confirmation codes
-- **leads** - Lead management and tracking
+- **leads** - Lead management and tracking (no dealer_leads table)
 - **notifications** - User notifications
 - **contact_inquiries** - Contact form submissions
 - **warranties** - Warranty management
@@ -219,7 +221,7 @@ Complete schema: `database_schema.sql` (root directory)
 
 ### Storage Buckets
 - **scooter-images** - Vehicle/scooter images
-- **documents** - All document uploads including dealer documents (business_license, tax_certificate, bank_statement). Documents are saved under `userId/{documentType}_timestamp.ext`
+- **dealer-documents** - All document uploads including dealer documents. Documents are saved under `{applicationId}/{filename}` format
 - **avatar** - Avatar images of profiles
 
 ---
@@ -229,7 +231,7 @@ Complete schema: `database_schema.sql` (root directory)
 ### Supabase
 - **Authentication:** Email/password with role-based access
 - **Database:** PostgreSQL with real-time subscriptions
-- **Storage:** File uploads for dealer documents to `documents` bucket. Documents are saved under `userId/{documentType}_timestamp.ext` and public URLs are stored in `dealer_applications.documents` for admin download.
+- **Storage:** File uploads for dealer documents to `dealer-documents` bucket. Documents are saved under `{applicationId}/{filename}` format. The API generates signed URLs for secure document access.
 - **Client Files:** `lib/supabase/client.ts` and `lib/supabase/server.ts`
 
 ### Razorpay Payment Gateway
@@ -366,6 +368,13 @@ pnpm install
 npx tsc --noEmit
 ```
 
+### Common Build Issues & Solutions
+1. **Supabase client async errors:** Ensure all `createClient()` calls in API routes are properly awaited
+2. **Invalid imports:** Check that deleted files/functions are not being imported anywhere
+3. **Type errors with relations:** Use separate queries instead of invalid relation syntax
+4. **Stale imports after file deletion:** Clear .next cache and rebuild
+5. **TypeScript implicit any[] errors:** Explicitly type empty arrays
+
 ### Supabase Connection Issues
 1. Verify environment variables are set
 2. Check Supabase project status
@@ -396,9 +405,12 @@ npx tsc --noEmit
 ### Key API Endpoints
 - **Auth:** `/api/auth/*` (login, signup, logout)
 - **Orders:** `/api/orders/*` (create, retrieve, update)
+- **Admin Orders:** `/api/admin/orders` (fetch all orders with filters)
 - **Payments:** `/api/payments/*` (create, verify)
 - **Test Rides:** `/api/test-rides/*` (book, manage)
 - **Contact:** `/api/contact` (contact form submissions)
+- **Dealer Applications:** `/api/admin/dealer-applications/*` (manage applications, documents)
+- **Leads:** `/api/admin/leads/*` (assign leads to dealers)
 - **Webhooks:** `/api/webhooks/razorpay` (payment confirmations)
 
 ### Database Relationships
@@ -422,15 +434,26 @@ orders
 └── warranties (one-to-one)
 
 dealers
+├── dealer_metrics (one-to-one)
 ├── orders (one-to-many)
 ├── test_rides (one-to-many)
-└── leads (one-to-many)
+└── leads (assigned_to foreign key to profiles)
 ```
 
 ### User Journey Flows
 1. **Customer:** Signup → Browse → Test Ride → Purchase → Track Order
 2. **Dealer:** Apply → Approval → Portal Access → Manage Inventory/Leads
-3. **Admin:** Login → Manage Users/Dealers/Orders → Analytics
+3. **Admin:** Login → Manage Users/Dealers/Orders/Leads → Analytics
+
+### Admin Panel Features
+- **Dashboard:** Overview with real-time metrics and charts
+- **User Management:** View and manage all users with role assignments
+- **Dealer Applications:** Review, approve/reject applications with document management
+- **Dealers:** Manage approved dealers and view performance metrics
+- **Vehicles:** Full CRUD operations for vehicle catalog
+- **Leads:** Assign and manage leads across dealers
+- **Orders:** View all orders with advanced filters
+- **Warranties:** Manage warranty registrations and claims
 
 ### Role Permissions Matrix
 | Feature | Customer | Dealer | Admin |

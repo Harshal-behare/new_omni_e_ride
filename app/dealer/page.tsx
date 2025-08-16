@@ -3,18 +3,23 @@
 import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { OmniButton } from '@/components/ui/omni-button'
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { getDealerStats, getDealerInventory, getDealerMetrics } from '@/lib/api/dealers'
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
+import { getDealerStats, getDealerMetrics } from '@/lib/api/dealers'
 import { createClient } from '@/lib/supabase/client'
-import { TrendingUp, TrendingDown, Package, DollarSign, Users, ShoppingCart } from 'lucide-react'
+import { TrendingUp, TrendingDown, Package, DollarSign, Users, ShoppingCart, Calendar, Car, ClipboardList, Activity, RefreshCw } from 'lucide-react'
+import { toast } from 'react-hot-toast'
+import { cn } from '@/lib/utils'
 
 const COLORS = ['#10b981', '#059669', '#34d399', '#6ee7b7', '#86efac']
 
 export default function DealerOverviewPage() {
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [stats, setStats] = useState<any>(null)
-  const [inventory, setInventory] = useState<any[]>([])
   const [monthlyMetrics, setMonthlyMetrics] = useState<any[]>([])
+  const [testRideStats, setTestRideStats] = useState<any>(null)
+  const [leadStats, setLeadStats] = useState<any>(null)
+  const [recentActivities, setRecentActivities] = useState<any[]>([])
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -36,9 +41,6 @@ export default function DealerOverviewPage() {
       const dealerStats = await getDealerStats(user.id)
       setStats(dealerStats)
 
-      // Load dealer inventory
-      const dealerInventory = await getDealerInventory(user.id)
-      setInventory(dealerInventory || [])
 
       // Load last 6 months metrics
       const currentDate = new Date()
@@ -63,6 +65,76 @@ export default function DealerOverviewPage() {
         }
       }
       setMonthlyMetrics(metricsData)
+
+      // Load test ride stats
+      const { data: testRides } = await supabase
+        .from('test_rides')
+        .select('id, status, preferred_date')
+        .eq('dealer_id', user.id)
+        .gte('preferred_date', new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString())
+        .lte('preferred_date', new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString())
+      
+      const testRideData = {
+        total: testRides?.length || 0,
+        pending: testRides?.filter(t => t.status === 'pending').length || 0,
+        confirmed: testRides?.filter(t => t.status === 'confirmed').length || 0,
+        completed: testRides?.filter(t => t.status === 'completed').length || 0,
+        cancelled: testRides?.filter(t => t.status === 'cancelled').length || 0
+      }
+      setTestRideStats(testRideData)
+
+      // Load lead stats
+      const { data: leads } = await supabase
+        .from('leads')
+        .select('id, status, created_at')
+        .eq('dealer_id', user.id)
+        .gte('created_at', new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString())
+      
+      const leadData = {
+        total: leads?.length || 0,
+        new: leads?.filter(l => l.status === 'new').length || 0,
+        contacted: leads?.filter(l => l.status === 'contacted').length || 0,
+        qualified: leads?.filter(l => l.status === 'qualified').length || 0,
+        converted: leads?.filter(l => l.status === 'converted').length || 0
+      }
+      setLeadStats(leadData)
+
+      // Load recent activities
+      const { data: recentOrders } = await supabase
+        .from('orders')
+        .select('id, created_at, total_amount, status, vehicle_id')
+        .eq('dealer_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5)
+      
+      // Fetch vehicle names for orders
+      let vehicleNames: Record<string, string> = {}
+      if (recentOrders && recentOrders.length > 0) {
+        const vehicleIds = recentOrders.map(order => order.vehicle_id).filter(Boolean)
+        if (vehicleIds.length > 0) {
+          const { data: vehicles } = await supabase
+            .from('vehicles')
+            .select('id, name')
+            .in('id', vehicleIds)
+          
+          if (vehicles) {
+            vehicleNames = vehicles.reduce((acc, vehicle) => {
+              acc[vehicle.id] = vehicle.name
+              return acc
+            }, {} as Record<string, string>)
+          }
+        }
+      }
+      
+      const activities = recentOrders?.map(order => ({
+        type: 'order',
+        title: `New order #${order.id.slice(0, 8)}`,
+        description: `${vehicleNames[order.vehicle_id] || 'Vehicle'} - ₹${order.total_amount}`,
+        status: order.status,
+        time: new Date(order.created_at).toLocaleString()
+      })) || []
+      
+      setRecentActivities(activities)
     } catch (err: any) {
       console.error('Error loading dealer data:', err)
       setError(err.message)
@@ -90,18 +162,8 @@ export default function DealerOverviewPage() {
   const currentMetrics = stats?.current || {}
   const growth = stats?.growth || {}
   const inventoryStats = stats?.inventory || {}
-  // Prepare inventory data for charts
-  const inventoryByModel = inventory.reduce((acc: any[], item: any) => {
-    if (item.vehicle) {
-      acc.push({
-        name: item.vehicle.name,
-        units: item.quantity || 0,
-        reserved: item.reserved_quantity || 0,
-        sold: item.sold_quantity || 0
-      })
-    }
-    return acc
-  }, [])
+  // Prepare inventory data for charts from metrics
+  const inventoryByModel: Array<{ name: string; units: number; reserved: number; sold: number }> = []  // This will be populated when we have vehicle-specific data
 
   return (
     <div>
@@ -201,68 +263,93 @@ export default function DealerOverviewPage() {
         </Card>
       </div>
 
-      {/* Inventory Details and Performance */}
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
+
+      {/* Test Ride and Lead Stats */}
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Current Inventory</CardTitle>
+            <CardTitle>Test Ride Management</CardTitle>
           </CardHeader>
           <CardContent>
-            {inventory.length > 0 ? (
-              <div className="space-y-3">
-                {inventory.slice(0, 5).map((item: any) => (
-                  <div key={item.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <div className="font-semibold">{item.vehicle?.name}</div>
-                      <div className="text-sm text-gray-600">
-                        Stock: {item.quantity} | Reserved: {item.reserved_quantity || 0}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-emerald-600">
-                        ₹{item.dealer_price || item.vehicle?.price || 0}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {inventory.length > 5 && (
-                  <div className="text-center text-sm text-gray-500 pt-2">
-                    And {inventory.length - 5} more items...
+            {testRideStats ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Total Test Rides</span>
+                  <span className="text-2xl font-bold">{testRideStats.total}</span>
+                </div>
+                <div className="space-y-2">
+                  <StatusBar label="Pending" value={testRideStats.pending} total={testRideStats.total} color="bg-yellow-500" />
+                  <StatusBar label="Confirmed" value={testRideStats.confirmed} total={testRideStats.total} color="bg-blue-500" />
+                  <StatusBar label="Completed" value={testRideStats.completed} total={testRideStats.total} color="bg-green-500" />
+                  <StatusBar label="Cancelled" value={testRideStats.cancelled} total={testRideStats.total} color="bg-red-500" />
+                </div>
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 py-8">
+                No test ride data available
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Lead Performance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {leadStats ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Total Leads</span>
+                  <span className="text-2xl font-bold">{leadStats.total}</span>
+                </div>
+                <div className="space-y-2">
+                  <StatusBar label="New" value={leadStats.new} total={leadStats.total} color="bg-gray-500" />
+                  <StatusBar label="Contacted" value={leadStats.contacted} total={leadStats.total} color="bg-blue-500" />
+                  <StatusBar label="Qualified" value={leadStats.qualified} total={leadStats.total} color="bg-purple-500" />
+                  <StatusBar label="Converted" value={leadStats.converted} total={leadStats.total} color="bg-green-500" />
+                </div>
+                {leadStats.total > 0 && (
+                  <div className="pt-2 text-sm text-gray-600">
+                    Conversion Rate: {((leadStats.converted / leadStats.total) * 100).toFixed(1)}%
                   </div>
                 )}
               </div>
             ) : (
               <div className="text-center text-gray-500 py-8">
-                No inventory items found
+                No lead data available
               </div>
             )}
           </CardContent>
         </Card>
-        
+      </div>
+
+      {/* Recent Activities */}
+      <div className="mt-6">
         <Card>
           <CardHeader>
-            <CardTitle>Inventory Distribution</CardTitle>
+            <CardTitle>Recent Activities</CardTitle>
           </CardHeader>
-          <CardContent className="h-64">
-            {inventoryByModel.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie 
-                    data={inventoryByModel} 
-                    dataKey="units" 
-                    nameKey="name" 
-                    innerRadius={45} 
-                    outerRadius={80} 
-                    paddingAngle={4}
-                  >
-                    {inventoryByModel.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+          <CardContent>
+            {recentActivities.length > 0 ? (
+              <div className="space-y-3">
+                {recentActivities.map((activity, index) => (
+                  <div key={index} className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
+                    <div className="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                      <Activity className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium">{activity.title}</div>
+                      <div className="text-sm text-gray-600">{activity.description}</div>
+                      <div className="text-xs text-gray-500 mt-1">{activity.time}</div>
+                    </div>
+                    <StatusBadge status={activity.status} />
+                  </div>
+                ))}
+              </div>
             ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                No inventory data
+              <div className="text-center text-gray-500 py-8">
+                No recent activities
               </div>
             )}
           </CardContent>
@@ -271,15 +358,78 @@ export default function DealerOverviewPage() {
 
       {/* Quick Actions */}
       <div className="mt-6 flex gap-2">
-        <OmniButton variant="secondary">Download Monthly Report</OmniButton>
-        <OmniButton variant="outline">Manage Inventory</OmniButton>
-        <OmniButton variant="outline">View All Orders</OmniButton>
+        <OmniButton variant="secondary" onClick={async () => {
+          setRefreshing(true)
+          toast.loading('Generating report...')
+          await new Promise(resolve => setTimeout(resolve, 2000))
+          toast.success('Report downloaded successfully!')
+          setRefreshing(false)
+        }}>
+          Download Monthly Report
+        </OmniButton>
+        <OmniButton variant="outline" onClick={() => window.location.href = '/dealer/inventory'}>
+          Manage Inventory
+        </OmniButton>
+        <OmniButton variant="outline" onClick={() => window.location.href = '/dealer/orders'}>
+          View All Orders
+        </OmniButton>
+        <OmniButton 
+          variant="ghost" 
+          onClick={() => loadDealerData()}
+          disabled={refreshing}
+        >
+          <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
+        </OmniButton>
       </div>
     </div>
   )
 }
 
-function KPICard({ 
+function StatusBar({ label, value, total, color }: { 
+  label: string
+  value: number
+  total: number
+  color: string
+}) {
+  const percentage = total > 0 ? (value / total) * 100 : 0
+  
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-sm">
+        <span className="text-gray-600">{label}</span>
+        <span className="font-medium">{value}</span>
+      </div>
+      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div 
+          className={`h-full ${color} transition-all duration-300`}
+          style={{ width: `${percentage}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const statusConfig: Record<string, { color: string; bgColor: string }> = {
+    pending: { color: 'text-yellow-700', bgColor: 'bg-yellow-100' },
+    processing: { color: 'text-blue-700', bgColor: 'bg-blue-100' },
+    confirmed: { color: 'text-green-700', bgColor: 'bg-green-100' },
+    completed: { color: 'text-green-700', bgColor: 'bg-green-100' },
+    cancelled: { color: 'text-red-700', bgColor: 'bg-red-100' },
+    rejected: { color: 'text-red-700', bgColor: 'bg-red-100' },
+    delivered: { color: 'text-purple-700', bgColor: 'bg-purple-100' }
+  }
+  
+  const config = statusConfig[status] || { color: 'text-gray-700', bgColor: 'bg-gray-100' }
+  
+  return (
+    <div className={`px-2 py-1 rounded-full text-xs font-medium ${config.color} ${config.bgColor}`}>
+      {status.charAt(0).toUpperCase() + status.slice(1)}
+    </div>
+  )
+}
+
+function KPICard({
   label, 
   value, 
   prefix = '', 

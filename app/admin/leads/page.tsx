@@ -5,6 +5,9 @@ import { getLeads, assignLeadToDealer, updateLeadStatus, type Lead, type LeadFil
 import { OmniButton } from '@/components/ui/omni-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
   Phone, 
   Mail, 
@@ -15,8 +18,19 @@ import {
   Clock,
   ChevronRight,
   Filter,
-  Download
+  Download,
+  Building,
+  Search,
+  UserPlus
 } from 'lucide-react'
+
+interface Dealer {
+  id: string
+  business_name: string
+  business_email: string
+  city: string
+  state: string
+}
 
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([])
@@ -26,6 +40,11 @@ export default function AdminLeadsPage() {
   const [pageSize] = useState(20)
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
+  const [dealers, setDealers] = useState<Dealer[]>([])
+  const [selectedDealer, setSelectedDealer] = useState<string>('')
+  const [dealerSearch, setDealerSearch] = useState('')
+  const [assigningLead, setAssigningLead] = useState(false)
+  const [leadAssignments, setLeadAssignments] = useState<Record<string, any>>({})
   const [filters, setFilters] = useState<LeadFilters>({
     status: [],
     priority: [],
@@ -36,7 +55,26 @@ export default function AdminLeadsPage() {
 
   useEffect(() => {
     fetchLeads()
+    fetchDealers()
   }, [currentPage, filters])
+
+  async function fetchDealers() {
+    try {
+      const response = await fetch('/api/dealers')
+      if (response.ok) {
+        const data = await response.json()
+        setDealers(data.map((dealer: any) => ({
+          id: dealer.id,
+          business_name: dealer.business_name || dealer.profiles?.name || 'Unnamed Dealer',
+          business_email: dealer.business_email || dealer.profiles?.email || '',
+          city: dealer.city || '',
+          state: dealer.state || ''
+        })))
+      }
+    } catch (error) {
+      console.error('Failed to fetch dealers:', error)
+    }
+  }
 
   async function fetchLeads() {
     setLoading(true)
@@ -55,14 +93,33 @@ export default function AdminLeadsPage() {
     }
   }
 
-  async function handleAssignLead(leadId: string, dealerId: string) {
+  async function handleAssignLead() {
+    if (!selectedLead || !selectedDealer) return
+    
+    setAssigningLead(true)
     try {
-      await assignLeadToDealer(leadId, dealerId)
-      await fetchLeads()
-      setAssignDialogOpen(false)
-      setSelectedLead(null)
+      const response = await fetch('/api/admin/leads/assign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leadId: selectedLead.id,
+          dealerId: selectedDealer
+        })
+      })
+      
+      if (response.ok) {
+        await fetchLeads()
+        setAssignDialogOpen(false)
+        setSelectedLead(null)
+        setSelectedDealer('')
+      } else {
+        const error = await response.json()
+        console.error('Failed to assign lead:', error)
+      }
     } catch (error) {
       console.error('Failed to assign lead:', error)
+    } finally {
+      setAssigningLead(false)
     }
   }
 
@@ -225,6 +282,9 @@ export default function AdminLeadsPage() {
                   Source
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Assigned To
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Date
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -235,13 +295,13 @@ export default function AdminLeadsPage() {
             <tbody className="divide-y">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
                     Loading leads...
                   </td>
                 </tr>
               ) : leads.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
                     No leads found
                   </td>
                 </tr>
@@ -281,6 +341,22 @@ export default function AdminLeadsPage() {
                       <span className="text-sm text-gray-900 capitalize">
                         {lead.source.replace('_', ' ')}
                       </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm">
+                        {lead.assigned_to ? (
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {dealers.find(d => d.id === lead.assigned_to)?.business_name || 'Unknown Dealer'}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {dealers.find(d => d.id === lead.assigned_to)?.city}
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400">Not assigned</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-sm text-gray-900">
@@ -375,6 +451,111 @@ export default function AdminLeadsPage() {
           </div>
         )}
       </div>
+
+      {/* Dealer Assignment Dialog */}
+      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              Assign Lead to Dealer
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedLead && (
+            <div className="space-y-4">
+              {/* Lead Info */}
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <div className="font-medium">{selectedLead.name}</div>
+                <div className="text-sm text-gray-600">{selectedLead.email}</div>
+                <div className="text-sm text-gray-600">{selectedLead.phone}</div>
+                {selectedLead.subject && (
+                  <div className="text-sm text-gray-600 mt-1">Subject: {selectedLead.subject}</div>
+                )}
+              </div>
+              
+              {/* Dealer Search */}
+              <div>
+                <Label>Search Dealer</Label>
+                <div className="relative mt-1">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Search by dealer name, email, or city..."
+                    value={dealerSearch}
+                    onChange={(e) => setDealerSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+              
+              {/* Dealer Selection */}
+              <div>
+                <Label>Select Dealer</Label>
+                <Select value={selectedDealer} onValueChange={setSelectedDealer}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Select a dealer to assign" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dealers
+                      .filter(dealer => {
+                        if (!dealerSearch) return true
+                        const search = dealerSearch.toLowerCase()
+                        return (
+                          dealer.business_name.toLowerCase().includes(search) ||
+                          dealer.business_email.toLowerCase().includes(search) ||
+                          dealer.city.toLowerCase().includes(search)
+                        )
+                      })
+                      .map(dealer => (
+                        <SelectItem key={dealer.id} value={dealer.id}>
+                          <div>
+                            <div className="font-medium">{dealer.business_name}</div>
+                            <div className="text-sm text-gray-600">
+                              {dealer.business_email} • {dealer.city}, {dealer.state}
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {selectedDealer && (
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm text-blue-800">
+                    <Building className="h-4 w-4" />
+                    <span>Selected Dealer:</span>
+                    <span className="font-medium">
+                      {dealers.find(d => d.id === selectedDealer)?.business_name}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter>
+            <OmniButton
+              variant="outline"
+              onClick={() => {
+                setAssignDialogOpen(false)
+                setSelectedLead(null)
+                setSelectedDealer('')
+                setDealerSearch('')
+              }}
+            >
+              Cancel
+            </OmniButton>
+            <OmniButton
+              onClick={handleAssignLead}
+              disabled={!selectedDealer || assigningLead}
+            >
+              {assigningLead ? 'Assigning...' : 'Assign Lead'}
+            </OmniButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

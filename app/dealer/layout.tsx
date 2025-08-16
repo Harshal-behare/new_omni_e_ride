@@ -5,21 +5,44 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { RoleGate } from '@/components/auth/role-gate'
 import { OmniButton } from '@/components/ui/omni-button'
-import { Home, Calendar, ShoppingCart, Users, Menu, ChevronLeft, ChevronRight, Shield } from 'lucide-react'
+import { UserAvatar } from '@/components/ui/user-avatar'
+import { Home, Calendar, ShoppingCart, Users, Menu, ChevronLeft, ChevronRight, Shield, UserCircle, ClipboardList } from 'lucide-react'
 import { useDemoAuth } from '@/components/auth/demo-auth-provider'
 import { cn } from '@/lib/utils'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 
 export default function DealerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const { logout } = useDemoAuth()
+  const { user, logout } = useDemoAuth()
   const [collapsed, setCollapsed] = React.useState(false)
+  const [dealerProfile, setDealerProfile] = React.useState<any>(null)
+  
+  React.useEffect(() => {
+    // Fetch dealer profile to get business name
+    const fetchDealerProfile = async () => {
+      try {
+        const response = await fetch('/api/dealer/profile')
+        if (response.ok) {
+          const data = await response.json()
+          setDealerProfile(data)
+        }
+      } catch (error) {
+        console.error('Error fetching dealer profile:', error)
+      }
+    }
+    
+    if (user) {
+      fetchDealerProfile()
+    }
+  }, [user])
+  
   const items = [
     { href: '/dealer', icon: <Home className="h-5 w-5" />, label: 'Overview' },
     { href: '/dealer/test-rides', icon: <Calendar className="h-5 w-5" />, label: 'Test Rides' },
     { href: '/dealer/orders', icon: <ShoppingCart className="h-5 w-5" />, label: 'Orders' },
     { href: '/dealer/warranty', icon: <Shield className="h-5 w-5" />, label: 'Warranty' },
-    { href: '/dealer/customers', icon: <Users className="h-5 w-5" />, label: 'Customers' },
+    { href: '/dealer/leads', icon: <ClipboardList className="h-5 w-5" />, label: 'Leads' },
+    { href: '/dealer/profile', icon: <UserCircle className="h-5 w-5" />, label: 'Profile' },
   ]
   return (
     <RoleGate allow={['dealer']}>
@@ -39,7 +62,17 @@ export default function DealerLayout({ children }: { children: React.ReactNode }
             </button>
             <Link href="/" className="ml-2 font-bold text-emerald-700">OMNI E-RIDE</Link>
           </div>
-          <OmniButton variant="outline" size="sm" onClick={logout}>Logout</OmniButton>
+          <div className="flex items-center gap-3">
+            <Link href="/dealer/profile">
+              <UserAvatar 
+                name={dealerProfile?.name || dealerProfile?.business_name || user?.name || 'Dealer'}
+                email={dealerProfile?.email || user?.email || ''}
+                size="sm"
+                showOnline
+              />
+            </Link>
+            <OmniButton variant="outline" size="sm" onClick={logout}>Logout</OmniButton>
+          </div>
         </div>
       </header>
 

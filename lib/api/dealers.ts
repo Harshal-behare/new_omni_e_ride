@@ -351,52 +351,6 @@ export async function updateDealerMetrics(dealerId: string, metrics: Partial<Dea
   return data
 }
 
-// Dealer Inventory Operations
-export async function getDealerInventory(dealerId: string) {
-  const supabase = createClient()
-  
-  const { data, error } = await supabase
-    .from('dealer_inventory')
-    .select(`
-      *,
-      vehicle:vehicles(
-        id,
-        slug,
-        name,
-        price,
-        images,
-        range_km,
-        top_speed
-      )
-    `)
-    .eq('dealer_id', dealerId)
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
-    
-  if (error) throw error
-  return data
-}
-
-export async function updateDealerInventory(
-  dealerId: string,
-  vehicleId: string,
-  inventory: Partial<DealerInventory>
-) {
-  const supabase = createClient()
-  
-  const { data, error } = await supabase
-    .from('dealer_inventory')
-    .upsert({
-      ...inventory,
-      dealer_id: dealerId,
-      vehicle_id: vehicleId
-    })
-    .select()
-    .single()
-    
-  if (error) throw error
-  return data
-}
 
 // Document Upload Operations
 export async function uploadDealerDocument(
@@ -468,16 +422,13 @@ export async function getDealerStats(dealerId: string) {
     .eq('period_year', previousYear)
     .single()
     
-  // Get total inventory
-  const { data: inventory } = await supabase
-    .from('dealer_inventory')
-    .select('quantity, reserved_quantity, sold_quantity')
-    .eq('dealer_id', dealerId)
-    .eq('is_active', true)
-    
-  const totalInventory = inventory?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0
-  const reservedUnits = inventory?.reduce((sum, item) => sum + (item.reserved_quantity || 0), 0) || 0
-  const soldUnits = inventory?.reduce((sum, item) => sum + (item.sold_quantity || 0), 0) || 0
+  // Since we don't have dealer_inventory table, we'll use metrics for inventory data
+  const inventoryStats = {
+    total: currentMetrics?.total_inventory || 0,
+    reserved: currentMetrics?.reserved_units || 0,
+    sold: currentMetrics?.sold_units || 0,
+    available: (currentMetrics?.total_inventory || 0) - (currentMetrics?.reserved_units || 0)
+  }
   
   return {
     current: currentMetrics || {
@@ -490,12 +441,7 @@ export async function getDealerStats(dealerId: string) {
       customer_satisfaction_score: 0
     },
     previous: previousMetrics,
-    inventory: {
-      total: totalInventory,
-      reserved: reservedUnits,
-      sold: soldUnits,
-      available: totalInventory - reservedUnits
-    },
+    inventory: inventoryStats,
     growth: previousMetrics ? {
       sales: previousMetrics.monthly_sales ? 
         ((currentMetrics?.monthly_sales || 0) - previousMetrics.monthly_sales) / previousMetrics.monthly_sales * 100 : 0,

@@ -23,7 +23,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 - **Build Status:** ✅ Successful
 - **Progress:** 95% complete, all major features implemented
 - **Production Ready:** Yes, pending final environment configuration
-- **Recent Updates:** Fixed dealer_inventory references, implemented real orders display, added document management
+- **Recent Updates:** Fixed all build errors, implemented leads management, enhanced logout functionality
 
 ---
 
@@ -368,6 +368,13 @@ pnpm install
 npx tsc --noEmit
 ```
 
+### Common Build Issues & Solutions
+1. **Supabase client async errors:** Ensure all `createClient()` calls in API routes are properly awaited
+2. **Invalid imports:** Check that deleted files/functions are not being imported anywhere
+3. **Type errors with relations:** Use separate queries instead of invalid relation syntax
+4. **Stale imports after file deletion:** Clear .next cache and rebuild
+5. **TypeScript implicit any[] errors:** Explicitly type empty arrays
+
 ### Supabase Connection Issues
 1. Verify environment variables are set
 2. Check Supabase project status
@@ -436,7 +443,17 @@ dealers
 ### User Journey Flows
 1. **Customer:** Signup → Browse → Test Ride → Purchase → Track Order
 2. **Dealer:** Apply → Approval → Portal Access → Manage Inventory/Leads
-3. **Admin:** Login → Manage Users/Dealers/Orders → Analytics
+3. **Admin:** Login → Manage Users/Dealers/Orders/Leads → Analytics
+
+### Admin Panel Features
+- **Dashboard:** Overview with real-time metrics and charts
+- **User Management:** View and manage all users with role assignments
+- **Dealer Applications:** Review, approve/reject applications with document management
+- **Dealers:** Manage approved dealers and view performance metrics
+- **Vehicles:** Full CRUD operations for vehicle catalog
+- **Leads:** Assign and manage leads across dealers
+- **Orders:** View all orders with advanced filters
+- **Warranties:** Manage warranty registrations and claims
 
 ### Role Permissions Matrix
 | Feature | Customer | Dealer | Admin |

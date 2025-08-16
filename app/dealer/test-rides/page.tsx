@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
+import { AvailabilitySettingsModal } from '@/components/dealer/availability-settings-modal'
 
 interface TestRideData {
   id: string
@@ -487,6 +488,12 @@ export default function DealerTestRidesPage() {
           </Card>
         </div>
       )}
+
+      {/* Availability Settings Modal */}
+      <AvailabilitySettingsModal
+        isOpen={showAvailabilitySettings}
+        onClose={() => setShowAvailabilitySettings(false)}
+      />
     </div>
   )
 }

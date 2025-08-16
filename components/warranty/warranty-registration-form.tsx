@@ -4,7 +4,7 @@ import * as React from 'react'
 import { MODELS } from '@/lib/models-data'
 import { OmniButton } from '@/components/ui/omni-button'
 import { SignaturePad } from './signature-pad'
-import { submitWarranty } from '@/lib/stores/warranties'
+// import { submitWarranty } from '@/lib/stores/warranties' // No longer using localStorage
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -14,11 +14,13 @@ import { AlertCircle, CheckCircle2 } from 'lucide-react'
 
 export function WarrantyRegistrationForm({
   dealerName = 'Green Wheels Bengaluru',
+  dealerId,
   defaultCustomer,
   onSubmitted,
   className,
 }: {
   dealerName?: string
+  dealerId?: string
   defaultCustomer?: { name: string; email: string; phone?: string }
   onSubmitted?: (id: string) => void
   className?: string
@@ -64,20 +66,30 @@ export function WarrantyRegistrationForm({
     setLoading(true)
     
     try {
-      // Store warranty locally
-      const rec = submitWarranty({
-        customerEmail: email,
-        customerName,
-        phone,
-        modelId,
-        modelName: model.name,
-        vin,
-        purchaseDate,
-        periodYears,
-        dealerName,
-        invoiceImage: invoice,
-        signatureDataUrl: sig,
+      // Submit warranty via API
+      const response = await fetch('/api/dealer/warranties', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_email: email,
+          customer_name: customerName,
+          phone,
+          vehicle_model: model.name,
+          model_id: modelId,
+          vin,
+          purchase_date: purchaseDate,
+          period_years: periodYears,
+          invoice_image_url: invoice,
+          signature_data_url: sig,
+        })
       })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to submit warranty')
+      }
+
+      const result = await response.json()
       
       // Also create a lead for warranty inquiry
       await submitInquiry({
@@ -95,10 +107,16 @@ export function WarrantyRegistrationForm({
         message: 'Warranty registration submitted successfully! We will review and confirm within 24 hours.' 
       })
       
-      onSubmitted?.(rec.id)
+      onSubmitted?.(result.warranty.id)
       
       // Clear success message after 5 seconds
       setTimeout(() => setSubmitStatus(null), 5000)
+      
+      // Reset form
+      e.currentTarget.reset()
+      setInvoice('')
+      setSig('')
+      setAgree(false)
     } catch (error) {
       console.error('Warranty submission error:', error)
       setSubmitStatus({ 

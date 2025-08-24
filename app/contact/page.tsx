@@ -6,6 +6,8 @@ import { useForm } from 'react-hook-form'
 import { OmniButton } from '@/components/ui/omni-button'
 import { Phone, Mail, MapPin, Clock, CheckCircle2, AlertCircle, ChevronRight } from 'lucide-react'
 import { submitContactForm, ContactFormData } from '@/lib/api/leads'
+import SiteHeader from '@/components/site-header'
+import SiteFooter from '@/components/site-footer'
 
 type FormVals = {
   name: string
@@ -46,24 +48,17 @@ export default function ContactPage() {
     }
   }
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
-      {/* Breadcrumb Navigation */}
-      <nav aria-label="Breadcrumb" className="flex items-center text-sm text-gray-600 mb-6">
-        <Link href="/" className="hover:text-gray-900 transition-colors">
-          Home
-        </Link>
-        <ChevronRight className="mx-2 h-4 w-4 text-gray-400" />
-        <span className="text-gray-900 font-medium">Contact</span>
-      </nav>
-
+    <div className="min-h-screen flex flex-col">
+      <SiteHeader />
+      <div className="flex-1 mx-auto max-w-7xl px-4 py-10">
       <div className="rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 p-8 text-white">
         <h1 className="text-3xl font-extrabold">Get in Touch with OMNI E-RIDE</h1>
         <p className="mt-1 text-emerald-100">We&apos;re here to help you with all your electric scooter needs.</p>
         <div className="mt-4 flex flex-wrap gap-6 text-emerald-50 text-sm">
-          <Info icon={<Phone className="h-4 w-4" />} text="+91 98765 43210" />
+          <Info icon={<Phone className="h-4 w-4" />} text="011-6926-8712" />
           <Info icon={<Mail className="h-4 w-4" />} text="support@omnideride.com" />
-          <Info icon={<MapPin className="h-4 w-4" />} text="MG Road, Bengaluru 560001" />
-          <Info icon={<Clock className="h-4 w-4" />} text="Mon–Sat: 9:00–18:00" />
+          <Info icon={<MapPin className="h-4 w-4" />} text="Baijnathpur Rd, Yadav Chowk, Hatiya Gachhi, Saharsa, Bihar 852202" />
+          <Info icon={<Clock className="h-4 w-4" />} text="Sunday–Friday: 10:00 am – 7:00 pm (Saturday closed)" />
         </div>
       </div>
 
@@ -127,6 +122,8 @@ export default function ContactPage() {
           </div>
         </section>
       </div>
+      </div>
+      <SiteFooter />
     </div>
   )
 }

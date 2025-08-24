@@ -77,46 +77,33 @@ export default function DealerLocations() {
         <div className="flex flex-col gap-6">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">Find Our Dealers</h2>
-              <p className="text-gray-600">Search dealers near you and book your test ride.</p>
-            </div>
-            <OmniButton variant="ghost">Use Current Location</OmniButton>
+          <h2 className="text-3xl font-bold text-gray-900">Our Dealers</h2>
+          <p className="text-gray-600">Visit our showroom or connect with our authorized dealers.</p>
+        </div>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-12">
-            {/* Map */}
-            <div className="relative lg:col-span-7 rounded-xl ring-1 ring-gray-200 overflow-hidden">
-              <img
-                src="/placeholder.svg?height=700&width=1000"
-                alt="Map of India showing dealer locations"
-                className="h-full w-full object-cover"
-              />
-              {/* Markers (placeholder positioning) */}
-              {filtered.map((d) => {
-                if (!d.latitude || !d.longitude) return null
-                const { x, y } = projectToBox(d.latitude, d.longitude)
-                const active = selectedId === d.id
-                return (
-                  <button
-                    key={d.id}
-                    title={d.business_name}
-                    aria-label={`${d.business_name}, ${d.city}`}
-                    onClick={() => {
-                      setSelectedId(d.id)
-                      setSelectedDealer(d)
-                      setModalOpen(true)
-                    }}
-                    className={cn(
-                      'absolute -translate-x-1/2 -translate-y-full rounded-full border bg-white p-1.5 shadow-md transition',
-                      active ? 'border-emerald-600 ring-2 ring-emerald-300' : 'border-gray-300 hover:scale-105'
-                    )}
-                    style={{ left: `${x * 100}%`, top: `${y * 100}%` }}
-                  >
-                    <MapPin className={cn('h-5 w-5', active ? 'text-emerald-600' : 'text-emerald-500')} />
-                  </button>
-                )
-              })}
-            </div>
+      <div className="grid gap-6 lg:grid-cols-12">
+        {/* Showroom Image */}
+        <div className="relative lg:col-span-7 rounded-xl ring-1 ring-gray-200 overflow-hidden">
+          <img
+            src="/placeholder.svg?height=700&width=1000"
+            alt="Omni ElectraRide Showroom"
+            className="h-full w-full object-cover"
+          />
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+            <h3 className="text-white text-xl font-semibold mb-2">Omni ElectraRide Showroom</h3>
+            <p className="text-white/90 text-sm mb-3">NH-107, Yadav Chowk, Saharsa, Bihar - 852201</p>
+            <a 
+              href="https://www.google.com/maps/place/Omni+ElectraRide+Showroom/@25.8789055,86.6212866" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition"
+            >
+              <Navigation className="h-4 w-4" />
+              Get Directions
+            </a>
+          </div>
+        </div>
 
             {/* Filters + List */}
             <div className="lg:col-span-5">

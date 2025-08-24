@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { Instagram, Facebook, Twitter, Youtube, Shield, CreditCard, Lock } from 'lucide-react'
+import { Instagram, Facebook, Youtube, Shield, CreditCard, Lock } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { OmniButton } from '@/components/ui/omni-button'
 
@@ -13,12 +13,10 @@ export default function SiteFooter() {
         <div className="grid gap-8 md:grid-cols-3 lg:grid-cols-4">
           {/* Company Info */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded bg-emerald-600" aria-hidden="true" />
-              <div>
-                <div className="font-semibold text-white">OMNI E-RIDE</div>
-                <div className="text-sm text-emerald-400">Powering Green Mobility</div>
-              </div>
+            <div>
+              <img src="/Logo.png" className="h-10 w-auto mb-3" alt="OMNI E-RIDE Logo" />
+              <div className="font-semibold text-white">OMNI E-RIDE</div>
+              <div className="text-sm text-emerald-400">Powering Green Mobility</div>
             </div>
             <p className="text-sm text-gray-400">
               OMNI E-RIDE is committed to building a sustainable future with innovative electric scooters designed for modern city life.
@@ -26,10 +24,10 @@ export default function SiteFooter() {
             <div className="text-sm">
               <div className="text-gray-400">Head Office</div>
               <address className="not-italic">
-                123 Green Avenue, Sector 21,<br /> Bengaluru, Karnataka 560001
+                Baijnathpur Rd, Yadav Chowk,<br /> Hatiya Gachhi, Saharsa, Bihar 852202
               </address>
-              <div>Phone: <a href="tel:+911234567890" className="text-emerald-400 hover:underline">+91 12345 67890</a></div>
-              <div>Email: <a href="mailto:info@omnideride.com" className="text-emerald-400 hover:underline">info@omnideride.com</a></div>
+              <div>Phone: <a href="tel:01169268712" className="text-emerald-400 hover:underline">011-6926-8712</a></div>
+              <div>Email: <a href="mailto:support@omnideride.com" className="text-emerald-400 hover:underline">support@omnideride.com</a></div>
             </div>
           </div>
 
@@ -55,7 +53,6 @@ export default function SiteFooter() {
             <h3 className="mb-4 text-sm font-semibold text-white">Support</h3>
             <ul className="grid gap-2 text-sm">
               {[
-                ['Contact Us', '/contact'],
                 ['Warranty', '/warranty'],
                 ['Privacy Policy', '/privacy'],
                 ['Terms & Conditions', '/terms'],
@@ -71,10 +68,9 @@ export default function SiteFooter() {
           <div>
             <h3 className="mb-4 text-sm font-semibold text-white">Connect & Subscribe</h3>
             <div className="mb-4 flex gap-3">
-              <a aria-label="Instagram" href="#" className="hover:text-emerald-400"><Instagram className="h-5 w-5" /></a>
-              <a aria-label="Facebook" href="#" className="hover:text-emerald-400"><Facebook className="h-5 w-5" /></a>
-              <a aria-label="Twitter" href="#" className="hover:text-emerald-400"><Twitter className="h-5 w-5" /></a>
-              <a aria-label="YouTube" href="#" className="hover:text-emerald-400"><Youtube className="h-5 w-5" /></a>
+              <a aria-label="Instagram" href="https://www.instagram.com/omni_eride/" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400"><Instagram className="h-5 w-5" /></a>
+              <a aria-label="Facebook" href="https://www.facebook.com/profile.php?id=61570865410071" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400"><Facebook className="h-5 w-5" /></a>
+              <a aria-label="YouTube" href="https://www.youtube.com/@Omnieride" target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400"><Youtube className="h-5 w-5" /></a>
             </div>
             <form className="mb-4 flex gap-2">
               <Input type="email" placeholder="Your email" className="bg-gray-800 border-gray-700 text-gray-100 placeholder:text-gray-500" aria-label="Email for newsletter" />

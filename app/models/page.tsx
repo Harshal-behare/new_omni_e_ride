@@ -12,6 +12,8 @@ import FinanceTools from '@/components/calculators/finance-tools'
 import WarrantyInfo from '@/components/warranty/warranty-info'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
+import SiteHeader from '@/components/site-header'
+import SiteFooter from '@/components/site-footer'
 
 type Vehicle = {
   id: string
@@ -80,16 +82,9 @@ export default function ModelsListingPage() {
   const b = vehicles.find((v) => v.id === compare[1])
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      {/* Breadcrumb Navigation */}
-      <nav aria-label="Breadcrumb" className="flex items-center text-sm text-gray-600 mb-6">
-        <Link href="/" className="hover:text-gray-900 transition-colors">
-          Home
-        </Link>
-        <ChevronRight className="mx-2 h-4 w-4 text-gray-400" />
-        <span className="text-gray-900 font-medium">Models</span>
-      </nav>
-
+    <div className="min-h-screen flex flex-col">
+      <SiteHeader />
+      <div className="flex-1 mx-auto max-w-7xl px-4 py-8">
       <header className="mb-6">
         <h1 className="text-3xl font-bold">Our Electric Scooters</h1>
         <p className="text-gray-600">Find the perfect electric scooter for your needs</p>
@@ -181,9 +176,9 @@ export default function ModelsListingPage() {
                       </div>
 
                       <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-gray-700">
-                        <span className="inline-flex items-center gap-1"><Gauge className="h-4 w-4 text-emerald-600" /> {v.top_speed_kmph} km/h</span>
+                        <span className="inline-flex items-center gap-1"><Timer className="h-4 w-4 text-emerald-600" /> {v.charging_time_hours} hrs</span>
                         <span className="inline-flex items-center gap-1"><BatteryCharging className="h-4 w-4 text-emerald-600" /> {v.battery_capacity || '—'}</span>
-                        <span className="inline-flex items-center gap-1"><Timer className="h-4 w-4 text-emerald-600" /> {v.range_km} km</span>
+                        <span className="inline-flex items-center gap-1"><Gauge className="h-4 w-4 text-emerald-600" /> {v.range_km} km</span>
                       </div>
 
                       <div className="mt-2 flex flex-wrap gap-2">
@@ -204,6 +199,8 @@ export default function ModelsListingPage() {
           <FinanceTools variant="models" />
         </section>
       </div>
+      </div>
+      <SiteFooter />
     </div>
   )
 }

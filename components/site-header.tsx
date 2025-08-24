@@ -154,16 +154,6 @@ export default function SiteHeader() {
         </div>
       </div>
 
-      {/* WhatsApp floating button */}
-      <a
-        href="https://wa.me/919999999999"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="fixed bottom-5 right-5 inline-flex items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg h-12 w-12 hover:bg-emerald-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
-        aria-label="Chat on WhatsApp"
-      >
-        <MessageCircle className="h-6 w-6" />
-      </a>
     </header>
   )
 }

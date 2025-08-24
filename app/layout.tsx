@@ -3,6 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import { DemoAuthProvider } from '@/components/auth/demo-auth-provider'
+import PublicLayoutWrapper from '@/components/public-layout-wrapper'
 
 
 export default function RootLayout({
@@ -23,7 +24,9 @@ html {
       </head>
       <body>
         <DemoAuthProvider>
-          {children}
+          <PublicLayoutWrapper>
+            {children}
+          </PublicLayoutWrapper>
         </DemoAuthProvider>
       </body>
     </html>

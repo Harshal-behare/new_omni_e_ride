@@ -13,7 +13,7 @@ export type EMICalculatorProps = {
 
 const TENURES = [6, 12, 18, 24, 36]
 
-export default function EMICalculator({ price, annualRatePct = 10, className }: EMICalculatorProps) {
+export default function EMICalculator({ price, annualRatePct = 12, className }: EMICalculatorProps) {
   const [down, setDown] = React.useState(Math.min(50000, Math.round(price * 0.15)))
   const [tenure, setTenure] = React.useState<number>(12)
 
@@ -27,7 +27,7 @@ export default function EMICalculator({ price, annualRatePct = 10, className }: 
   return (
     <Card className={className ? className : 'rounded-2xl p-6 md:p-8'}>
       <h3 className="text-xl md:text-2xl font-bold">Plan Your Electric Vehicle Purchase</h3>
-      <p className="text-sm text-gray-600">Fixed interest 10% p.a. Adjust down payment and tenure.</p>
+      <p className="text-sm text-gray-600">Fixed interest 12% p.a. Adjust down payment and tenure.</p>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>

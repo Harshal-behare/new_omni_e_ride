@@ -1,7 +1,8 @@
 'use client'
 
-import Breadcrumbs from '@/components/breadcrumbs'
 import DealerLocations from '@/components/sections/dealer-locations'
+import SiteHeader from '@/components/site-header'
+import SiteFooter from '@/components/site-footer'
 import { useState } from 'react'
 import { Maximize2, Minimize2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -10,19 +11,9 @@ import Link from 'next/link'
 export default function DealersPage() {
   const [fullMap, setFullMap] = useState(false)
   return (
-    <div className={cn('bg-white', fullMap && 'h-[calc(100dvh-64px)]')}>
-      <div className="border-b">
-        <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
-          <Breadcrumbs items={[{ href: '/', label: 'Home' }, { href: '/dealers', label: 'Find Our Dealers' }]} />
-          <button
-            onClick={() => setFullMap((v) => !v)}
-            className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50"
-          >
-            {fullMap ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-            {fullMap ? 'Exit Fullscreen' : 'Fullscreen Map'}
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen flex flex-col">
+      <SiteHeader />
+      <div className={cn('bg-white flex-1', fullMap && 'h-[calc(100dvh-64px)]')}>
 
       <div className="mx-auto max-w-7xl px-4 pt-4">
         <div className="rounded-xl border bg-emerald-50 p-4 text-sm text-emerald-900">
@@ -39,9 +30,11 @@ export default function DealersPage() {
         </div>
       </div>
 
-      <div className={cn(fullMap && 'h-full overflow-hidden')}>
-        <DealerLocations />
+        <div className={cn(fullMap && 'h-full overflow-hidden')}>
+          <DealerLocations />
+        </div>
       </div>
+      <SiteFooter />
     </div>
   )
 }

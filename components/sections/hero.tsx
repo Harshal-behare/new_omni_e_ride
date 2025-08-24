@@ -1,32 +1,10 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { BatteryCharging, Leaf, Smartphone, ChevronDown } from 'lucide-react'
+import { Leaf, Smartphone, ChevronDown } from 'lucide-react'
 import { OmniButton } from '@/components/ui/omni-button'
-import { Input } from '@/components/ui/input'
-
-function useCountUp(target: number, duration = 1200) {
-  const ref = useRef<HTMLSpanElement | null>(null)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const start = performance.now()
-    const step = (now: number) => {
-      const p = Math.min(1, (now - start) / duration)
-      const val = Math.floor(p * target)
-      el.textContent = `${val.toLocaleString()}`
-      if (p < 1) requestAnimationFrame(step)
-    }
-    requestAnimationFrame(step)
-  }, [target, duration])
-  return ref
-}
 
 export default function Hero() {
-  const customersRef = useCountUp(5000)
-  const dealersRef = useCountUp(50)
-  const satisfactionRef = useCountUp(99)
 
   return (
     <section id="hero" className="relative overflow-hidden">
@@ -53,10 +31,6 @@ export default function Hero() {
 
             <div className="flex flex-wrap gap-6 pt-4">
               <div className="flex items-center gap-2 text-gray-700">
-                <BatteryCharging className="w-5 h-5 text-emerald-600" aria-hidden="true" />
-                <span className="text-sm md:text-base">100+ KM Range</span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-700">
                 <Leaf className="w-5 h-5 text-emerald-600" aria-hidden="true" />
                 <span className="text-sm md:text-base">Zero Emissions</span>
               </div>
@@ -64,12 +38,6 @@ export default function Hero() {
                 <Smartphone className="w-5 h-5 text-emerald-600" aria-hidden="true" />
                 <span className="text-sm md:text-base">Smart Features</span>
               </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-3 gap-4 max-w-xl">
-              <Stat label="Happy Customers" valueRef={customersRef} suffix="+" />
-              <Stat label="Dealer Network" valueRef={dealersRef} suffix="+" />
-              <Stat label="Satisfaction" valueRef={satisfactionRef} suffix="%" />
             </div>
           </div>
 
@@ -92,14 +60,5 @@ export default function Hero() {
         <span className="sr-only">Scroll to featured models</span>
       </a>
     </section>
-  )
-}
-
-function Stat({ label, valueRef, suffix }: { label: string; valueRef: React.MutableRefObject<HTMLSpanElement | null>; suffix?: string }) {
-  return (
-    <div className="rounded-lg bg-white/70 ring-1 ring-gray-200 p-4 text-center">
-      <div className="text-2xl font-bold text-gray-900"><span ref={valueRef} />{suffix}</div>
-      <div className="text-sm text-gray-600">{label}</div>
-    </div>
   )
 }

@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useSimpleTestRideBooking } from '@/hooks/use-simple-booking'
-import { ArrowLeft, Car, MapPin, CreditCard } from 'lucide-react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useTestRideBooking } from '@/hooks/use-test-ride-booking'
+import { ArrowLeft, Car, MapPin, CreditCard, AlertCircle } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import Link from 'next/link'
 
@@ -34,7 +35,7 @@ interface Vehicle {
 
 export default function NewTestRidePage() {
   const router = useRouter()
-  const { bookTestRide, isBooking } = useSimpleTestRideBooking()
+  const { bookTestRide, isBooking, error, resetError } = useTestRideBooking()
   
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [loadingVehicles, setLoadingVehicles] = useState(true)
@@ -122,17 +123,21 @@ export default function NewTestRidePage() {
       return
     }
     
-    try {
-      await bookTestRide({
-        vehicle_id: selectedVehicle,
-        dealer_id: selectedDealer && selectedDealer !== 'any' ? selectedDealer : undefined,
-        scheduled_date: selectedDate,
-        scheduled_time: selectedTime,
-        notes: notes || undefined
-      })
-    } catch (error: any) {
-      console.error('Booking error:', error)
-    }
+    const result = await bookTestRide({
+      vehicleId: selectedVehicle,
+      dealershipId: selectedDealer && selectedDealer !== 'any' ? selectedDealer : null,
+      preferredDate: selectedDate,
+      preferredTime: selectedTime,
+      specialRequests: notes || undefined,
+      // Add default values for required fields - you may want to collect these from the user
+      contactNumber: '9999999999',
+      address: 'User Address',
+      city: 'New Delhi',
+      state: 'Delhi',
+      pincode: '110001'
+    })
+    
+    // The hook already handles navigation and toast messages
   }
 
   const selectedVehicleData = vehicles.find(v => v.id === selectedVehicle)
@@ -318,6 +323,21 @@ export default function NewTestRidePage() {
             </CardContent>
           </Card>
 
+          {/* Error Display */}
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {error.message}
+                {error.type === 'duplicate' && (
+                  <p className="mt-2 text-sm">
+                    Please check your existing bookings or choose a different time slot.
+                  </p>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Submit Button */}
           <Button
             type="submit"
@@ -328,7 +348,7 @@ export default function NewTestRidePage() {
             {isBooking ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Processing...
+                Booking your test ride...
               </>
             ) : (
               <>

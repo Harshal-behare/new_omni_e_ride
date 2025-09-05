@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
-import { useSupabaseClient } from '@supabase/auth-helpers-react'
+import { createClient } from '@/lib/supabase/client'
 
 interface BookTestRideData {
   vehicleId: string
@@ -23,7 +23,7 @@ interface BookingError {
 
 export function useTestRideBooking() {
   const router = useRouter()
-  const supabase = useSupabaseClient()
+  const supabase = createClient()
   const [isBooking, setIsBooking] = useState(false)
   const [error, setError] = useState<BookingError | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -110,10 +110,7 @@ export function useTestRideBooking() {
 
       // Success
       toast.success(
-        <div>
-          <p className="font-semibold">Test ride booked successfully!</p>
-          <p className="text-sm">Confirmation code: <span className="font-mono">{result.booking.confirmationCode}</span></p>
-        </div>,
+        `Test ride booked successfully!\nConfirmation code: ${result.booking.confirmationCode}`,
         { duration: 6000 }
       )
 

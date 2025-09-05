@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       .gte('created_at', today)
     
     const DAILY_BOOKING_LIMIT = 3
-    if (dailyBookingCount >= DAILY_BOOKING_LIMIT) {
+    if (dailyBookingCount !== null && dailyBookingCount >= DAILY_BOOKING_LIMIT) {
       return NextResponse.json(
         { error: `Daily booking limit (${DAILY_BOOKING_LIMIT}) reached. Please try again tomorrow.` },
         { status: 429 }

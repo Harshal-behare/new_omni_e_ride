@@ -4,8 +4,20 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
+interface TestResult {
+  status?: number
+  data?: any
+  error?: string
+}
+
+interface TestResults {
+  publicDealers?: TestResult
+  availableSlots?: TestResult
+  simpleBooking?: TestResult
+}
+
 export default function TestAPIPage() {
-  const [results, setResults] = useState<any>({})
+  const [results, setResults] = useState<TestResults>({})
   const [loading, setLoading] = useState(false)
 
   const testPublicDealersAPI = async () => {

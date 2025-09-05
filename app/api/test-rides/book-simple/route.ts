@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { generateIdempotencyKey, checkIdempotency, storeIdempotencyKey } from '@/lib/utils/idempotency'
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,6 +40,22 @@ export async function POST(request: NextRequest) {
       specialRequests
     } = body
     
+    // Generate idempotency key to prevent duplicate bookings
+    const idempotencyKey = generateIdempotencyKey(user.id, {
+      vehicleId,
+      preferredDate,
+      preferredTime,
+      dealershipId
+    })
+    
+    // Check for duplicate request
+    const { isDuplicate, existingResponse } = await checkIdempotency(supabase, idempotencyKey)
+    
+    if (isDuplicate && existingResponse) {
+      console.log('Duplicate test ride booking prevented for user:', user.id)
+      return NextResponse.json(existingResponse, { status: 200 })
+    }
+    
     // Validate required fields
     if (!vehicleId || !preferredDate || !preferredTime) {
       return NextResponse.json(
@@ -61,6 +78,49 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // Check for existing booking on same date/time
+    const { data: existingBooking } = await supabase
+      .from('test_rides')
+      .select('id, status')
+      .eq('user_id', user.id)
+      .eq('vehicle_id', vehicleId)
+      .eq('preferred_date', preferredDate)
+      .eq('preferred_time', preferredTime)
+      .in('status', ['pending', 'confirmed'])
+      .single()
+    
+    if (existingBooking) {
+      return NextResponse.json(
+        { error: 'You already have a booking for this vehicle at the selected date and time' },
+        { status: 409 }
+      )
+    }
+    
+    // Validate booking is not in the past
+    const bookingDateTime = new Date(`${preferredDate}T${preferredTime}`)
+    if (bookingDateTime < new Date()) {
+      return NextResponse.json(
+        { error: 'Cannot book test rides for past dates' },
+        { status: 400 }
+      )
+    }
+    
+    // Check daily booking limit per user (prevent abuse)
+    const today = new Date().toISOString().split('T')[0]
+    const { count: dailyBookingCount } = await supabase
+      .from('test_rides')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('created_at', today)
+    
+    const DAILY_BOOKING_LIMIT = 3
+    if (dailyBookingCount >= DAILY_BOOKING_LIMIT) {
+      return NextResponse.json(
+        { error: `Daily booking limit (${DAILY_BOOKING_LIMIT}) reached. Please try again tomorrow.` },
+        { status: 429 }
+      )
+    }
+    
     // Create test ride booking with all required fields from the schema
     const bookingData = {
       user_id: user.id,
@@ -78,33 +138,82 @@ export async function POST(request: NextRequest) {
       created_at: new Date().toISOString()
     }
     
-    const { data: booking, error: bookingError } = await supabase
-      .from('test_rides')
-      .insert(bookingData)
-      .select()
-      .single()
+    // Use database transaction for atomic operation
+    const { data: booking, error: bookingError } = await supabase.rpc('create_test_ride_booking', {
+      p_user_id: user.id,
+      p_vehicle_id: vehicleId,
+      p_dealer_id: dealershipId || null,
+      p_name: bookingData.name,
+      p_email: bookingData.email,
+      p_phone: bookingData.phone,
+      p_preferred_date: preferredDate,
+      p_preferred_time: preferredTime,
+      p_city: bookingData.city,
+      p_address: bookingData.address,
+      p_notes: specialRequests || null
+    })
     
     if (bookingError) {
       console.error('Error creating test ride booking:', bookingError)
+      
+      // Check if it's a duplicate booking error
+      if (bookingError.message?.includes('duplicate') || bookingError.code === '23505') {
+        return NextResponse.json(
+          { error: 'A booking with these details already exists' },
+          { status: 409 }
+        )
+      }
+      
       return NextResponse.json(
-        { error: 'Failed to create test ride booking: ' + bookingError.message },
+        { error: 'Failed to create test ride booking. Please try again.' },
         { status: 500 }
       )
     }
     
-    return NextResponse.json({
+    if (!booking || booking.length === 0) {
+      return NextResponse.json(
+        { error: 'Failed to create booking. Please try again.' },
+        { status: 500 }
+      )
+    }
+    
+    const successResponse = {
       success: true,
       message: 'Test ride booking created successfully',
       booking: {
-        id: booking.id,
-        confirmationCode: booking.confirmation_code,
+        id: booking[0].id,
+        confirmationCode: booking[0].confirmation_code,
         vehicleName: vehicle.name,
         preferredDate: preferredDate,
         preferredTime: preferredTime,
         dealerId: dealershipId,
         status: 'pending'
       }
-    }, { status: 201 })
+    }
+    
+    // Store the successful response with idempotency key
+    await storeIdempotencyKey(supabase, idempotencyKey, successResponse)
+    
+    // Send notification to user
+    try {
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: user.id,
+          title: 'Test Ride Confirmed',
+          message: `Your test ride for ${vehicle.name} on ${preferredDate} at ${preferredTime} has been booked. Confirmation code: ${booking[0].confirmation_code}`,
+          type: 'booking',
+          data: {
+            booking_id: booking[0].id,
+            confirmation_code: booking[0].confirmation_code
+          }
+        })
+    } catch (notificationError) {
+      console.error('Failed to send notification:', notificationError)
+      // Don't fail the booking if notification fails
+    }
+    
+    return NextResponse.json(successResponse, { status: 201 })
     
   } catch (error) {
     console.error('Error booking test ride:', error)

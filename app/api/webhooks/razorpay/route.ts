@@ -123,8 +123,8 @@ async function handlePaymentCaptured(supabase: any, payload: any) {
     
     if (paymentOrder?.notes?.type === 'test_ride') {
       // Update test ride booking
-      await supabase
-        .from('test_ride_bookings')
+      const { data: testRide } = await supabase
+        .from('test_rides')
         .update({
           payment_status: 'paid',
           status: 'confirmed',
@@ -132,22 +132,59 @@ async function handlePaymentCaptured(supabase: any, payload: any) {
           updated_at: new Date().toISOString()
         })
         .eq('id', paymentOrder.notes.testRideId)
+        .select('user_id')
+        .single()
       
       // Send confirmation notification
       await sendTestRideConfirmation(paymentOrder.notes.testRideId)
       
+      // Store payment transaction
+      if (testRide) {
+        await supabase
+          .from('payment_transactions')
+          .insert({
+            user_id: testRide.user_id,
+            order_id: order_id,
+            payment_id: payment_id,
+            amount: amount / 100,
+            currency: 'INR',
+            status: 'captured',
+            method: method,
+            captured: true,
+            metadata: { type: 'test_ride', test_ride_id: paymentOrder.notes.testRideId }
+          })
+      }
+      
     } else if (paymentOrder?.notes?.type === 'vehicle_order') {
       // Update vehicle order
-      await supabase
-        .from('vehicle_orders')
+      const { data: order } = await supabase
+        .from('orders')
         .update({
-          payment_status: 'paid',
-          order_status: 'confirmed',
-          payment_id: payment_id,
-          paid_at: new Date().toISOString(),
+          payment_status: 'completed',
+          status: 'confirmed',
+          confirmed_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .eq('id', paymentOrder.notes.orderId)
+        .select('user_id, dealer_id, final_amount, dealer_commission_rate')
+        .single()
+      
+      // Store payment transaction
+      if (order) {
+        await supabase
+          .from('payment_transactions')
+          .insert({
+            user_id: order.user_id,
+            order_id: order_id,
+            payment_id: payment_id,
+            amount: amount / 100,
+            currency: 'INR',
+            status: 'captured',
+            method: method,
+            captured: true,
+            metadata: { type: 'vehicle_order', order_id: paymentOrder.notes.orderId }
+          })
+      }
       
       // Update stock quantity
       await updateVehicleStock(supabase, paymentOrder.notes.vehicleId, paymentOrder.notes.quantity)
@@ -191,11 +228,12 @@ async function handlePaymentFailed(supabase: any, payload: any) {
     if (paymentOrder?.notes?.type === 'test_ride') {
       // Update test ride booking
       await supabase
-        .from('test_ride_bookings')
+        .from('test_rides')
         .update({
           payment_status: 'failed',
           status: 'cancelled',
           cancellation_reason: 'Payment failed',
+          cancelled_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .eq('id', paymentOrder.notes.testRideId)
@@ -203,11 +241,12 @@ async function handlePaymentFailed(supabase: any, payload: any) {
     } else if (paymentOrder?.notes?.type === 'vehicle_order') {
       // Update vehicle order
       await supabase
-        .from('vehicle_orders')
+        .from('orders')
         .update({
           payment_status: 'failed',
-          order_status: 'cancelled',
+          status: 'cancelled',
           cancellation_reason: 'Payment failed',
+          cancelled_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .eq('id', paymentOrder.notes.orderId)

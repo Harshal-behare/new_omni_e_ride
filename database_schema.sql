@@ -1,6 +1,19 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+CREATE TABLE public.booking_audit_log (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  action text NOT NULL,
+  entity_type text NOT NULL,
+  entity_id uuid,
+  details jsonb,
+  ip_address inet,
+  user_agent text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT booking_audit_log_pkey PRIMARY KEY (id),
+  CONSTRAINT booking_audit_log_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
 CREATE TABLE public.contact_inquiries (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   name text NOT NULL,
@@ -49,6 +62,23 @@ CREATE TABLE public.dealer_applications (
   CONSTRAINT dealer_applications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
   CONSTRAINT dealer_applications_reviewed_by_fkey FOREIGN KEY (reviewed_by) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.dealer_payouts (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  dealer_id uuid NOT NULL,
+  amount numeric NOT NULL,
+  commission_rate numeric DEFAULT 10.0,
+  orders_included jsonb,
+  status text DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'processing'::text, 'completed'::text, 'failed'::text])),
+  payout_date date,
+  razorpay_payout_id text,
+  bank_reference text,
+  notes text,
+  created_at timestamp with time zone DEFAULT now(),
+  processed_at timestamp with time zone,
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT dealer_payouts_pkey PRIMARY KEY (id),
+  CONSTRAINT dealer_payouts_dealer_id_fkey FOREIGN KEY (dealer_id) REFERENCES public.dealers(id)
+);
 CREATE TABLE public.dealers (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   user_id uuid,
@@ -74,6 +104,14 @@ CREATE TABLE public.dealers (
   CONSTRAINT dealers_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
   CONSTRAINT dealers_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.idempotency_keys (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  key text NOT NULL UNIQUE,
+  response jsonb NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  expires_at timestamp with time zone DEFAULT (now() + '24:00:00'::interval),
+  CONSTRAINT idempotency_keys_pkey PRIMARY KEY (id)
+);
 CREATE TABLE public.leads (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   name text NOT NULL,
@@ -98,8 +136,8 @@ CREATE TABLE public.leads (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT leads_pkey PRIMARY KEY (id),
-  CONSTRAINT leads_vehicle_interested_fkey FOREIGN KEY (vehicle_interested) REFERENCES public.vehicles(id),
   CONSTRAINT leads_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.profiles(id),
+  CONSTRAINT leads_vehicle_interested_fkey FOREIGN KEY (vehicle_interested) REFERENCES public.vehicles(id),
   CONSTRAINT leads_dealer_id_fkey FOREIGN KEY (dealer_id) REFERENCES public.dealers(id)
 );
 CREATE TABLE public.notifications (
@@ -142,10 +180,58 @@ CREATE TABLE public.orders (
   cancellation_reason text,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
+  dealer_commission_rate numeric DEFAULT 10.0,
+  dealer_commission_amount numeric,
+  commission_paid boolean DEFAULT false,
+  commission_paid_at timestamp with time zone,
+  payout_id uuid,
+  razorpay_order_id text,
   CONSTRAINT orders_pkey PRIMARY KEY (id),
+  CONSTRAINT orders_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
   CONSTRAINT orders_dealer_id_fkey FOREIGN KEY (dealer_id) REFERENCES public.dealers(id),
   CONSTRAINT orders_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehicles(id),
-  CONSTRAINT orders_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+  CONSTRAINT orders_payout_id_fkey FOREIGN KEY (payout_id) REFERENCES public.dealer_payouts(id)
+);
+CREATE TABLE public.payment_orders (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  amount numeric NOT NULL,
+  currency text DEFAULT 'INR'::text,
+  status text DEFAULT 'created'::text CHECK (status = ANY (ARRAY['created'::text, 'processing'::text, 'completed'::text, 'failed'::text, 'cancelled'::text])),
+  razorpay_order_id text UNIQUE,
+  description text,
+  notes jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT payment_orders_pkey PRIMARY KEY (id),
+  CONSTRAINT payment_orders_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.payment_refunds (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  payment_id text NOT NULL,
+  refund_id text UNIQUE,
+  amount numeric NOT NULL,
+  status text CHECK (status = ANY (ARRAY['pending'::text, 'processing'::text, 'processed'::text, 'failed'::text])),
+  reason text,
+  notes text,
+  processed_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT payment_refunds_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.payment_transactions (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  order_id text,
+  payment_id text UNIQUE,
+  amount numeric NOT NULL,
+  currency text DEFAULT 'INR'::text,
+  status text CHECK (status = ANY (ARRAY['pending'::text, 'processing'::text, 'captured'::text, 'failed'::text, 'refunded'::text])),
+  method text,
+  captured boolean DEFAULT false,
+  metadata jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT payment_transactions_pkey PRIMARY KEY (id),
+  CONSTRAINT payment_transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.payments (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -168,8 +254,8 @@ CREATE TABLE public.payments (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT payments_pkey PRIMARY KEY (id),
-  CONSTRAINT payments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
-  CONSTRAINT payments_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id)
+  CONSTRAINT payments_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id),
+  CONSTRAINT payments_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
 CREATE TABLE public.profiles (
   id uuid NOT NULL,
@@ -186,6 +272,19 @@ CREATE TABLE public.profiles (
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.stock_reservations (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  order_id uuid,
+  vehicle_id uuid,
+  quantity integer NOT NULL DEFAULT 1,
+  reserved_until timestamp with time zone NOT NULL,
+  released boolean DEFAULT false,
+  released_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT stock_reservations_pkey PRIMARY KEY (id),
+  CONSTRAINT stock_reservations_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id),
+  CONSTRAINT stock_reservations_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehicles(id)
 );
 CREATE TABLE public.test_rides (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -214,10 +313,21 @@ CREATE TABLE public.test_rides (
   feedback_comment text,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
+  payment_status text DEFAULT 'pending'::text CHECK (payment_status = ANY (ARRAY['pending'::text, 'paid'::text, 'failed'::text, 'refunded'::text])),
+  payment_id text,
+  deposit_amount numeric DEFAULT 2000,
+  razorpay_order_id text,
+  refund_id text,
+  refund_amount numeric,
+  refunded_at timestamp with time zone,
+  booking_metadata jsonb,
+  booking_source text DEFAULT 'web'::text,
+  ip_address inet,
+  user_agent text,
   CONSTRAINT test_rides_pkey PRIMARY KEY (id),
-  CONSTRAINT test_rides_dealer_id_fkey FOREIGN KEY (dealer_id) REFERENCES public.dealers(id),
   CONSTRAINT test_rides_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehicles(id),
-  CONSTRAINT test_rides_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+  CONSTRAINT test_rides_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT test_rides_dealer_id_fkey FOREIGN KEY (dealer_id) REFERENCES public.dealers(id)
 );
 CREATE TABLE public.vehicles (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -257,9 +367,9 @@ CREATE TABLE public.warranties (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT warranties_pkey PRIMARY KEY (id),
-  CONSTRAINT warranties_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id),
+  CONSTRAINT warranties_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
   CONSTRAINT warranties_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehicles(id),
-  CONSTRAINT warranties_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
+  CONSTRAINT warranties_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id)
 );
 CREATE TABLE public.warranty_registrations (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -285,4 +395,15 @@ CREATE TABLE public.warranty_registrations (
   CONSTRAINT warranty_registrations_pkey PRIMARY KEY (id),
   CONSTRAINT warranty_registrations_dealer_id_fkey FOREIGN KEY (dealer_id) REFERENCES public.dealers(id),
   CONSTRAINT warranty_registrations_reviewer_id_fkey FOREIGN KEY (reviewer_id) REFERENCES public.profiles(id)
+);
+CREATE TABLE public.webhook_events (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  source text NOT NULL,
+  event_type text NOT NULL,
+  payload jsonb NOT NULL,
+  processed boolean DEFAULT false,
+  processed_at timestamp with time zone,
+  error text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT webhook_events_pkey PRIMARY KEY (id)
 );

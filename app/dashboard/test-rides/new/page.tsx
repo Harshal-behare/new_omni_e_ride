@@ -7,11 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { useTestRidePayment } from '@/hooks/use-razorpay'
+import { useSimpleTestRideBooking } from '@/hooks/use-simple-booking'
 import { ArrowLeft, Car, MapPin, CreditCard } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import Link from 'next/link'
-import { MODELS } from '@/lib/models-data'
 
 interface Dealer {
   id: string
@@ -22,10 +21,23 @@ interface Dealer {
   phone: string
 }
 
+interface Vehicle {
+  id: string
+  name: string
+  slug: string
+  price: number
+  images: string[]
+  range_km: number
+  top_speed_kmph: number
+  charging_time_hours: number
+}
+
 export default function NewTestRidePage() {
   const router = useRouter()
-  const { bookTestRide, isBooking } = useTestRidePayment()
+  const { bookTestRide, isBooking } = useSimpleTestRideBooking()
   
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [loadingVehicles, setLoadingVehicles] = useState(true)
   const [dealers, setDealers] = useState<Dealer[]>([])
   const [loadingDealers, setLoadingDealers] = useState(true)
   const [selectedVehicle, setSelectedVehicle] = useState<string>('')
@@ -35,12 +47,38 @@ export default function NewTestRidePage() {
   const [notes, setNotes] = useState<string>('')
 
   useEffect(() => {
+    fetchVehicles()
     fetchDealers()
+    
+    // Check if vehicle ID is passed in query params
+    const searchParams = new URLSearchParams(window.location.search)
+    const vehicleId = searchParams.get('vehicle')
+    if (vehicleId) {
+      setSelectedVehicle(vehicleId)
+    }
   }, [])
+
+  const fetchVehicles = async () => {
+    try {
+      const response = await fetch('/api/vehicles')
+      if (response.ok) {
+        const data = await response.json()
+        setVehicles(data || [])
+      } else {
+        console.error('Failed to fetch vehicles')
+        toast.error('Unable to load vehicles')
+      }
+    } catch (error) {
+      console.error('Error fetching vehicles:', error)
+      toast.error('Unable to load vehicles')
+    } finally {
+      setLoadingVehicles(false)
+    }
+  }
 
   const fetchDealers = async () => {
     try {
-      const response = await fetch('/api/dealers')
+      const response = await fetch('/api/public/dealers')
       if (response.ok) {
         const data = await response.json()
         const dealersList = data.map((dealer: any) => ({
@@ -54,16 +92,13 @@ export default function NewTestRidePage() {
         setDealers(dealersList)
       } else {
         console.error('Failed to fetch dealers')
-        // Use some default dealers if fetch fails
-        setDealers([
-          { id: 'd1', name: 'Default Dealer 1', address: '123 Main St', city: 'City', state: 'State', phone: '1234567890' }
-        ])
+        toast.error('Unable to load dealer locations. You can still proceed with booking.')
+        setDealers([])
       }
     } catch (error) {
       console.error('Error fetching dealers:', error)
-      setDealers([
-        { id: 'd1', name: 'Default Dealer 1', address: '123 Main St', city: 'City', state: 'State', phone: '1234567890' }
-      ])
+      toast.error('Unable to load dealer locations. You can still proceed with booking.')
+      setDealers([])
     } finally {
       setLoadingDealers(false)
     }
@@ -100,7 +135,7 @@ export default function NewTestRidePage() {
     }
   }
 
-  const selectedVehicleData = MODELS.find(v => v.id === selectedVehicle)
+  const selectedVehicleData = vehicles.find(v => v.id === selectedVehicle)
   const selectedDealerData = dealers.find(d => d.id === selectedDealer)
 
   return (
@@ -135,12 +170,12 @@ export default function NewTestRidePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Select value={selectedVehicle} onValueChange={setSelectedVehicle}>
+              <Select value={selectedVehicle} onValueChange={setSelectedVehicle} disabled={loadingVehicles}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a vehicle" />
+                  <SelectValue placeholder={loadingVehicles ? "Loading vehicles..." : "Select a vehicle"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {MODELS.map(vehicle => (
+                  {vehicles.map(vehicle => (
                     <SelectItem key={vehicle.id} value={vehicle.id}>
                       <div className="flex items-center justify-between w-full">
                         <span>{vehicle.name}</span>
@@ -168,6 +203,9 @@ export default function NewTestRidePage() {
                       <p className="text-sm text-gray-600">
                         Starting at ₹{selectedVehicleData.price.toLocaleString('en-IN')}
                       </p>
+                      <div className="mt-1 text-xs text-gray-500">
+                        Range: {selectedVehicleData.range_km}km | Top Speed: {selectedVehicleData.top_speed_kmph}km/h
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -248,40 +286,33 @@ export default function NewTestRidePage() {
             dealerId={selectedDealer}
           />
 
-          {/* Payment Information */}
+          {/* Booking Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
-                Payment Information
+                Booking Information
               </CardTitle>
               <CardDescription>
-                A refundable deposit is required to book your test ride
+                Complete your test ride booking
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div>
-                    <p className="font-medium">Test Ride Deposit</p>
-                    <p className="text-sm text-gray-600">Fully refundable after test ride</p>
-                  </div>
-                  <p className="text-2xl font-bold text-blue-600">₹2,000</p>
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <h4 className="font-medium mb-2">What happens next?</h4>
+                  <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                    <li>• You'll receive a confirmation code instantly</li>
+                    <li>• Our dealer will contact you within 24 hours</li>
+                    <li>• Show the confirmation code at the dealership</li>
+                    <li>• Enjoy your test ride!</li>
+                  </ul>
                 </div>
                 
                 <div className="text-sm text-gray-600 space-y-2">
-                  <p>• The deposit will be refunded within 7 working days after your test ride</p>
-                  <p>• You can cancel up to 24 hours before the scheduled time for a full refund</p>
-                  <p>• Payment will be processed securely through Razorpay</p>
-                </div>
-                
-                <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <p className="text-sm text-blue-700 dark:text-blue-300 flex items-center gap-2">
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Secure payment gateway is fully integrated with Razorpay
-                  </p>
+                  <p>• Test rides are subject to availability</p>
+                  <p>• Valid driving license is required</p>
+                  <p>• You can cancel or reschedule anytime</p>
                 </div>
               </div>
             </CardContent>
@@ -302,7 +333,7 @@ export default function NewTestRidePage() {
             ) : (
               <>
                 <CreditCard className="h-5 w-5 mr-2" />
-                Pay ₹2,000 and Book Test Ride
+                Book Test Ride
               </>
             )}
           </Button>

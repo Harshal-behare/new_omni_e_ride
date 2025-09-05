@@ -140,13 +140,27 @@ export const useTestRidePayment = () => {
     setBookingError(null);
 
     try {
+      // Transform booking data to match API expectations
+      const apiData = {
+        vehicleId: bookingData.vehicle_id,
+        preferredDate: bookingData.scheduled_date,
+        preferredTime: bookingData.scheduled_time,
+        dealershipId: bookingData.dealer_id,
+        contactNumber: '9999999999', // Default contact number, should be from user profile
+        address: 'User Address', // Should be from user profile
+        city: 'City', // Should be from user profile
+        state: 'State', // Should be from user profile
+        pincode: '100001', // Should be from user profile
+        specialRequests: bookingData.notes
+      };
+
       // Create booking and payment order
       const response = await fetch('/api/test-rides/book', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(bookingData),
+        body: JSON.stringify(apiData),
       });
 
       if (!response.ok) {

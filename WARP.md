@@ -4,468 +4,337 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-**Omni E-Ride** is a comprehensive electric vehicle e-commerce platform that connects customers, dealers, and administrators through a modern web application. The platform facilitates vehicle sales, dealer management, test ride bookings, and service appointments with role-based dashboards for each user type.
+OMNI E-RIDE is a comprehensive electric mobility platform built with Next.js 15 and TypeScript. The platform manages customer interactions, dealer networks, vehicle sales, test ride bookings, and detailed analytics across three distinct user roles: customers, dealers, and administrators.
 
-### Tech Stack
-- **Framework:** Next.js 15 (App Router)
-- **Language:** TypeScript (strict mode)
-- **Styling:** Tailwind CSS 4.1.9
-- **UI Components:** shadcn/ui (Radix UI primitives)
-- **Database:** Supabase (PostgreSQL)
-- **Authentication:** Supabase Auth 
-- **Payment:** Razorpay integration
-- **Email:** Resend
-- **State Management:** Zustand
-- **Forms:** React Hook Form + Zod validation
-- **Package Manager:** pnpm (required)
+### Technology Stack
 
-### Current Status
-- **Build Status:** ✅ Successful
-- **Progress:** 95% complete, all major features implemented
-- **Production Ready:** Yes, pending final environment configuration
-- **Recent Updates:** Fixed all build errors, implemented leads management, enhanced logout functionality
+- **Frontend**: Next.js 15.2.4 (App Router), React 19, TypeScript 5
+- **Styling**: Tailwind CSS v4 with Radix UI components via shadcn/ui
+- **Database**: Supabase (PostgreSQL) with real-time subscriptions
+- **Authentication**: Supabase Auth with role-based access control
+- **Payment**: Razorpay integration for order processing
+- **Email**: React Email templates with Resend API
+- **State Management**: Zustand for client-side state
+- **Forms**: React Hook Form with Zod validation
 
----
+## Common Development Commands
 
-## Quick Start Commands
+### Development & Build
 
 ```bash
-# Install dependencies
-pnpm install
-
-# Start development server (http://localhost:3000)
-pnpm dev
+# Start development server
+pnpm run dev
 
 # Build for production
-pnpm build
+pnpm run build
 
 # Start production server
-pnpm start
+pnpm run start
 
-# Run linter
-pnpm lint
-
-# TypeScript type check (custom script to add if needed)
-npx tsc --noEmit
+# Run ESLint
+pnpm run lint
 ```
 
----
+### Database Operations
 
-## Environment Variables
-
-### Setup
 ```bash
-# Copy example environment file
-cp .env.local.example .env.local
+# Push database schema to Supabase
+npx supabase db push
+
+# Create new migration
+npx supabase migration new <migration_name>
+
+# Run database seeds (if available)
+npx tsx scripts/seed-sample-data.ts
 ```
 
-### Required Variables
-```env
-# Supabase (Required for production)
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+### Email Development
 
-# Application
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NODE_ENV=development
+```bash
+# Start email preview server (port 3001)
+pnpm run email:dev
 ```
 
-### Payment Integration (Razorpay)
-```env
-NEXT_PUBLIC_RAZORPAY_KEY_ID=your_razorpay_key_id
-RAZORPAY_KEY_SECRET=your_razorpay_key_secret
-RAZORPAY_WEBHOOK_SECRET=your_webhook_secret
-```
+### Environment Setup
 
-### Email Service (Resend)
-```env
-RESEND_API_KEY=your_resend_api_key
-EMAIL_FROM=noreply@yourdomain.com
-```
+```bash
+# Copy environment variables
+cp .env.example .env.local
 
-### Optional
-```env
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_key
+# Edit .env.local with your Supabase and service credentials
 ```
-
----
 
 ## Architecture Overview
 
-### Directory Structure
-```
-app/                    # Next.js App Router pages
-├── api/               # API routes
-├── dashboard/         # Customer dashboard
-├── dealer/            # Dealer portal
-├── admin/             # Admin interface
-├── (auth)/           # Auth pages (login, signup)
-└── (public)/         # Public pages (home, models, about)
-
-components/            # Reusable UI components
-├── ui/               # shadcn/ui components
-├── auth/             # Authentication components
-├── forms/            # Form components
-└── sections/         # Page sections
-
-lib/                  # Utility functions and configurations
-├── api/              # API client functions
-├── stores/           # Zustand state stores
-├── supabase/         # Supabase client setup
-├── razorpay/         # Payment integration
-├── validation/       # Zod schemas
-├── database.types.ts # TypeScript types
-└── utils.ts          # Utility functions
-
-supabase/             # Database migrations and config
-├── migrations/       # SQL migration files
-└── config.toml       # Supabase configuration
-```
-
-### Key Architecture Patterns
-
-**Client/Server Components:** Mixed usage with server components for data fetching and client components for interactivity.
-
-**API Routes:** Follow REST patterns under `/app/api/*` with proper error handling and validation.
-
-**State Management:** Zustand stores for auth, notifications, and form state.
-
-**Data Flow:** Server Components → API Routes → Supabase → Database
-
-**Note:** No RLS policies are currently set - this is intentional until project completion.
-
----
-
-## Authentication & RBAC
-
-### User Roles
-1. **Customer** (default): Dashboard access, order management, test rides
-2. **Dealer** (requires approval): Dealer portal, inventory management, lead handling
-3. **Admin**: Full system access, user management, analytics
-
 ### Authentication Flow
-The platform uses a hybrid authentication system:
-- **Supabase Auth:** Primary authentication for production users with email verification
-- **Demo Mode:** Quick access for testing with predefined demo accounts
-- **Profile Storage:** User profiles stored in `profiles` table with extended fields (name, phone, address, city, state, pincode)
-- **Session Management:** Automatic session refresh and persistence across browser reloads
 
-### Protected Routes
-- `/dashboard/*` - Requires any authenticated user
-- `/dealer/*` - Requires dealer or admin role
-- `/admin/*` - Requires admin role
+The application uses Supabase Auth with middleware-based role checking:
 
-### Implementation
-```tsx
-// Using RoleGate component
-<RoleGate allow={['admin', 'dealer']}>
-  <DealerContent />
-</RoleGate>
+1. **Middleware** (`middleware.ts`) intercepts all requests and validates authentication
+2. **Role-based routing** enforces access control:
+   - `/dashboard/*` - Customer portal (role: customer)
+   - `/dealer/*` - Dealer management (role: dealer)
+   - `/admin/*` - Admin interface (role: admin)
+3. **Profile sync** - User profiles in `public.profiles` table sync with auth.users
 
-// Using auth hook
-const { user, loading } = useAuth()
-if (user?.role === 'admin') {
-  // Admin functionality
-}
+### Database Structure
+
+For schema check the file database_schema.sql
+
+Key tables and their relationships:
+
+```
+profiles (users) ← one-to-many → orders
+    ↓                              ↓
+  dealers ← one-to-many → test_rides
+    ↓                              ↓
+  leads                        vehicles
+    ↓
+dealer_applications → warranties → payments
 ```
 
-### Auth Providers
-- **Primary:** `DemoAuthProvider` (supports both demo and Supabase)
-- **Hook:** `useAuth()` for accessing user state
-- **Store:** `useAuthStore` (Zustand) for auth state management
+Primary entities:
 
----
+- `profiles` - User accounts with role designation
+- `vehicles` - Product catalog with specifications
+- `test_rides` - Booking system with dealer assignment
+- `orders` - Purchase records with payment tracking
+- `dealers` - Approved dealer accounts and metadata
+- `dealer_applications` - Pending dealer registrations
 
-## Database Management
+### API Route Patterns
 
-### Supabase Setup
-1. Create project at [supabase.com](https://supabase.com)
-2. Copy URL and anon key to `.env.local`
-3. Run database migration
+The application follows Next.js 15 App Router conventions:
 
-### Migration Commands
-```bash
-# Initialize Supabase locally (optional)
-supabase start
-
-# Apply migrations 
-supabase db push
-
-# Reset database (destructive)
-supabase db reset
+```
+/app/api/
+  ├── public/        # Unauthenticated endpoints
+  ├── admin/         # Admin-only operations
+  ├── dealer/        # Dealer-specific endpoints
+  └── [resource]/    # Resource-based CRUD operations
 ```
 
-### Key Tables
-- **profiles** - User profiles with role information (extends auth.users)
-- **vehicles** - Product catalog with specifications and images
-- **orders** - Order management with auto-generated order numbers
-- **payments** - Payment tracking (Razorpay integration)
-- **dealers** - Dealer network information (created when dealer application is approved)
-- **dealer_applications** - Dealer application workflow (includes terms_accepted, documents array)
-- **dealer_metrics** - Dealer performance metrics and statistics
-- **test_rides** - Test ride bookings with confirmation codes
-- **leads** - Lead management and tracking (no dealer_leads table)
-- **notifications** - User notifications
-- **contact_inquiries** - Contact form submissions
-- **warranties** - Warranty management
+Example patterns:
 
-### Schema Location
-Complete schema: `database_schema.sql` (root directory)
+- `GET /api/test-rides` - List user's test rides
+- `POST /api/test-rides/book-simple` - Create booking
+- `PUT /api/dealer/test-rides` - Update booking status
+- `GET /api/public/dealers` - Public dealer list
 
-### Database Features
-- **Auto-generated Functions:** Order numbers, warranty codes, confirmation codes
-- **ENUM Types:** user_role, order_status, payment_status, dealer_status, etc.
-- **JSONB Fields:** For flexible data storage (specifications, features, metadata)
-- **Foreign Key Constraints:** Proper table relationships
-- **No RLS Policies:** Currently disabled until project completion
+### Real-time Subscriptions
 
-### Storage Buckets
-- **scooter-images** - Vehicle/scooter images
-- **dealer-documents** - All document uploads including dealer documents. Documents are saved under `{applicationId}/{filename}` format
-- **avatar** - Avatar images of profiles
+The platform uses Supabase Realtime for live updates:
 
----
-
-## Key Integrations
-
-### Supabase
-- **Authentication:** Email/password with role-based access
-- **Database:** PostgreSQL with real-time subscriptions
-- **Storage:** File uploads for dealer documents to `dealer-documents` bucket. Documents are saved under `{applicationId}/{filename}` format. The API generates signed URLs for secure document access.
-- **Client Files:** `lib/supabase/client.ts` and `lib/supabase/server.ts`
-
-### Razorpay Payment Gateway
-- **Integration:** `lib/razorpay/client.ts`
-- **Webhooks:** `/app/api/webhooks/razorpay/route.ts`
-- **Test Cards:** Standard Razorpay test cards work
-- **Features:** Order creation, payment verification, refunds
-
-### Resend Email Service
-- **Templates:** `emails/` directory with React Email components
-- **API:** `/app/api/contact/route.ts` for contact forms
-- **Features:** Welcome emails, order confirmations, notifications
-
----
-
-## Component Patterns
-
-### UI Components
-Built with shadcn/ui (Radix UI primitives):
-```tsx
-import { Button } from '@/components/ui/button'
-import { Dialog } from '@/components/ui/dialog'
-import { Form } from '@/components/ui/form'
+```typescript
+// Pattern used in hooks/useRealtime.ts
+supabase
+  .channel("custom-channel")
+  .on(
+    "postgres_changes",
+    {
+      event: "*",
+      schema: "public",
+      table: "orders",
+    },
+    handleUpdate
+  )
+  .subscribe();
 ```
 
-### Form Handling
-```tsx
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { loginSchema } from '@/lib/validation/schemas'
+## Directory Structure
 
-const form = useForm({
-  resolver: zodResolver(loginSchema)
-})
+### `/app` - Application Routes
+
+Organized by user role and feature:
+
+- `/app/(auth)` - Login/signup pages
+- `/app/dashboard` - Customer portal pages
+- `/app/dealer` - Dealer management interface
+- `/app/admin` - Administrative controls
+- `/app/api` - API endpoints and server actions
+
+### `/components` - UI Components
+
+- `/components/ui` - shadcn/ui primitives
+- `/components/sections` - Page sections (hero, testimonials)
+- `/components/dashboard` - Dashboard-specific components
+- `/components/realtime` - Live update components
+
+### `/lib` - Core Utilities
+
+- `/lib/supabase` - Database client configuration
+- `/lib/api` - API utility functions
+- `/lib/validation` - Zod schemas
+- `/lib/email` - Email sending utilities
+- `/lib/stores` - Zustand state stores
+
+### `/emails` - Email Templates
+
+React Email components for notifications:
+
+- Welcome emails
+- Order confirmations
+- Test ride confirmations
+- Dealer application updates
+
+### `/hooks` - Custom React Hooks
+
+- `use-razorpay` - Payment processing
+- `use-realtime` - Live subscriptions
+- `use-simple-booking` - Test ride booking
+
+## Key Workflows
+
+### Test Ride Booking Flow
+
+1. Customer browses vehicles at `/dashboard/vehicles`
+2. Clicks "Book Test Ride" → `/dashboard/test-rides/new`
+3. Selects date, time, and optional dealer preference
+4. System creates booking with status: `pending`
+5. Dealer receives notification and approves/rejects
+6. Customer receives email confirmation
+7. Status updates: `pending` → `confirmed` → `completed`
+
+### Order Management Flow
+
+1. Customer selects vehicle and proceeds to checkout
+2. Razorpay order created via `/api/orders/checkout`
+3. Payment processed through Razorpay SDK
+4. Webhook `/api/webhooks/razorpay` verifies payment
+5. Order status updates and email sent
+6. Dealer notified of new order
+
+### Dealer Application Process
+
+1. User submits application at `/dashboard/dealer-application`
+2. Admin reviews at `/admin/dealer-applications`
+3. Admin can request documents or additional info
+4. Upon approval, dealer account created
+5. User role updated to `dealer`
+6. Access granted to dealer dashboard
+
+## Development Guidelines
+
+### Environment Variables
+
+Required variables in `.env.local`:
+
+```env
+# Supabase (Required)
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+
+# Email Service (Required for notifications)
+RESEND_API_KEY=
+EMAIL_FROM=
+
+# Payment Gateway (Required for orders)
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+RAZORPAY_WEBHOOK_SECRET=
+NEXT_PUBLIC_RAZORPAY_KEY_ID=
 ```
 
-### Loading States
+### Database Migrations
+
+When modifying database schema:
+
+1. Create migration: `npx supabase migration new descriptive_name`
+2. Edit the generated SQL file in `/supabase/migrations`
+3. Test locally: `npx supabase db push`
+4. Deploy to production via Supabase Dashboard
+
+### Component Development Patterns
+
+The project uses composition patterns with shadcn/ui:
+
 ```tsx
-import { Skeleton } from '@/components/ui/skeleton'
+// Example component structure
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
-if (loading) return <Skeleton className="h-4 w-full" />
-```
+export function MyComponent() {
+  const { toast } = useToast();
 
-### Theme Support
-Dark/light mode implemented with `next-themes`:
-```tsx
-import { ThemeProvider } from '@/components/theme-provider'
-```
-
----
-
-## Development Workflow
-
-### TypeScript Standards
-- **Strict Mode:** Enabled in `tsconfig.json`
-- **Types:** Database types auto-generated in `lib/database.types.ts`
-- **Validation:** All API inputs validated with Zod schemas
-
-### API Route Pattern
-```tsx
-// app/api/example/route.ts
-export async function POST(request: Request) {
-  try {
-    const body = await request.json()
-    // Validate with Zod schema
-    const validated = schema.parse(body)
-    // Process request
-    return NextResponse.json({ success: true })
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Invalid request' }, 
-      { status: 400 }
-    )
-  }
+  // Component logic with proper error handling
+  const handleAction = async () => {
+    try {
+      // Action logic
+      toast({ title: "Success" });
+    } catch (error) {
+      toast({
+        title: "Error",
+        variant: "destructive",
+      });
+    }
+  };
 }
 ```
 
 ### State Management
-Zustand stores for:
-- **Auth:** `lib/stores/auth.ts`
-- **Notifications:** `lib/stores/notifications.ts`
-- **Theme:** Built-in with next-themes
 
-### Data Fetching
-- **Server Components:** Direct database queries using Supabase server client
-- **Client Components:** API routes for mutations and client-side data
-- **No Real-time Features:** Project is kept minimal without live updates
+- **Server State**: Managed through API routes and React Server Components
+- **Client State**: Zustand stores in `/lib/stores` for complex state
+- **Form State**: React Hook Form for all forms
+- **UI State**: Local component state for simple interactions
 
----
+### Error Handling
 
-## Deployment
+Consistent error handling across the application:
 
-### Vercel Configuration
-Project is configured for Vercel deployment with:
-- **Auto-deployment:** Connected to Git repository
-- **Environment Variables:** Set in Vercel dashboard
-- **Build Command:** `pnpm build`
-- **Install Command:** `pnpm install`
-
-### Security Headers
-Configured in `next.config.js`:
-- CSP (Content Security Policy)
-- HSTS (HTTP Strict Transport Security)
-- XSS Protection
-- Frame Options
-
-### Image Optimization
-Configured remote patterns for:
-- Supabase storage
-- Unsplash (demo images)
-- Local images
-
-### Production Checklist
-- [ ] Environment variables set
-- [ ] Supabase project configured
-- [ ] Razorpay keys (live mode)
-- [ ] Email service configured
-- [ ] Domain configured in Supabase auth settings
-
----
+```typescript
+// API Routes
+try {
+  // Operation
+  return NextResponse.json({ success: true, data });
+} catch (error) {
+  console.error("Operation failed:", error);
+  return NextResponse.json({ error: "Operation failed" }, { status: 500 });
+}
+```
 
 ## Troubleshooting
 
-### Build Errors
-```bash
-# Clear Next.js cache
-rm -rf .next
+### Common Issues
 
-# Reinstall dependencies
-rm -rf node_modules pnpm-lock.yaml
-pnpm install
+1. **"Invalid input syntax for type uuid"**
 
-# Type check
-npx tsc --noEmit
-```
+   - Ensure all ID parameters are valid UUIDs
+   - Check dealer/vehicle IDs in test ride bookings
 
-### Common Build Issues & Solutions
-1. **Supabase client async errors:** Ensure all `createClient()` calls in API routes are properly awaited
-2. **Invalid imports:** Check that deleted files/functions are not being imported anywhere
-3. **Type errors with relations:** Use separate queries instead of invalid relation syntax
-4. **Stale imports after file deletion:** Clear .next cache and rebuild
-5. **TypeScript implicit any[] errors:** Explicitly type empty arrays
+2. **Supabase Auth Errors**
 
-### Supabase Connection Issues
-1. Verify environment variables are set
-2. Check Supabase project status
-3. Ensure API keys are correct
-4. Check network/firewall restrictions
+   - Verify environment variables are set correctly
+   - Check Supabase project is active and not paused
 
-### Authentication Problems
-- **Demo Mode:** Set `NEXT_PUBLIC_SUPABASE_URL` to empty string to force demo mode
-- **Role Issues:** Check profile creation triggers in database
-- **Session Issues:** Clear browser storage and cookies
+3. **Email Not Sending**
 
-### Payment Integration
-- **Test Mode:** Use Razorpay test keys and test card numbers
-- **Webhook Testing:** Use ngrok for local webhook testing
-- **CORS Issues:** Verify allowed origins in next.config.js
+   - Confirm RESEND_API_KEY is valid
+   - Verify sender domain in Resend dashboard
 
----
+4. **Payment Integration Issues**
+   - Test with Razorpay test keys first
+   - Ensure webhook secret matches dashboard configuration
 
-## Quick Reference
+### Development Tips
 
-### Important File Locations
-- **Database Types:** `lib/database.types.ts`
-- **Auth Store:** `lib/stores/auth.ts`
-- **API Client:** `lib/api/*.ts`
-- **Validation Schemas:** `lib/validation/schemas.ts`
-- **Environment Config:** `lib/env.ts`
+- Use the `/test-api` page to debug API endpoints
+- Check Supabase logs for database query issues
+- Monitor browser console for client-side errors
+- Review Next.js terminal output for server errors
 
-### Key API Endpoints
-- **Auth:** `/api/auth/*` (login, signup, logout)
-- **Orders:** `/api/orders/*` (create, retrieve, update)
-- **Admin Orders:** `/api/admin/orders` (fetch all orders with filters)
-- **Payments:** `/api/payments/*` (create, verify)
-- **Test Rides:** `/api/test-rides/*` (book, manage)
-- **Contact:** `/api/contact` (contact form submissions)
-- **Dealer Applications:** `/api/admin/dealer-applications/*` (manage applications, documents)
-- **Leads:** `/api/admin/leads/*` (assign leads to dealers)
-- **Webhooks:** `/api/webhooks/razorpay` (payment confirmations)
+## Related Documentation
 
-### Database Relationships
-```
-profiles (extends auth.users)
-├── orders (one-to-many)
-├── test_rides (one-to-many) 
-├── dealer_applications (one-to-one)
-├── dealers (one-to-one) 
-├── leads (one-to-many as assigned_to)
-├── notifications (one-to-many)
-└── contact_inquiries (one-to-many as assigned_to)
+- `TEST_RIDE_SYSTEM.md` - Detailed test ride implementation
+- `emails/README.md` - Email system documentation
+- `docs/` - Additional technical documentation
+- `.env.example` - Complete environment variable reference
 
-vehicles
-├── orders (one-to-many)
-├── test_rides (one-to-many)
-└── leads (one-to-many as vehicle_interested)
+## Production Considerations
 
-orders
-├── payments (one-to-many)
-└── warranties (one-to-one)
-
-dealers
-├── dealer_metrics (one-to-one)
-├── orders (one-to-many)
-├── test_rides (one-to-many)
-└── leads (assigned_to foreign key to profiles)
-```
-
-### User Journey Flows
-1. **Customer:** Signup → Browse → Test Ride → Purchase → Track Order
-2. **Dealer:** Apply → Approval → Portal Access → Manage Inventory/Leads
-3. **Admin:** Login → Manage Users/Dealers/Orders/Leads → Analytics
-
-### Admin Panel Features
-- **Dashboard:** Overview with real-time metrics and charts
-- **User Management:** View and manage all users with role assignments
-- **Dealer Applications:** Review, approve/reject applications with document management
-- **Dealers:** Manage approved dealers and view performance metrics
-- **Vehicles:** Full CRUD operations for vehicle catalog
-- **Leads:** Assign and manage leads across dealers
-- **Orders:** View all orders with advanced filters
-- **Warranties:** Manage warranty registrations and claims
-
-### Role Permissions Matrix
-| Feature | Customer | Dealer | Admin |
-|---------|----------|--------|-------|
-| Browse Products | ✅ | ✅ | ✅ |
-| Place Orders | ✅ | ❌ | ✅ |
-| Book Test Rides | ✅ | ❌ | ✅ |
-| Manage Inventory | ❌ | ✅ | ✅ |
-| Approve Dealers | ❌ | ❌ | ✅ |
-| Manage Leads | ❌ | ✅ | ✅ |
-| User Management | ❌ | ❌ | ✅ |
-
----
-
-*This document should be updated as the project evolves. Last updated: January 2025*
+- Enable Supabase Row Level Security (RLS) policies
+- Configure proper CORS settings for production domain
+- Set up monitoring and error tracking (Sentry, etc.)
+- Implement rate limiting for public APIs
+- Enable Supabase database backups
+- Configure CDN for static assets

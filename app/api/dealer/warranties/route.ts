@@ -80,7 +80,6 @@ export async function POST(request: Request) {
       purchase_date,
       period_years,
       invoice_image_url,
-      signature_data_url,
       notes
     } = body
 
@@ -111,7 +110,6 @@ export async function POST(request: Request) {
         dealer_id: dealerData.id,
         dealer_name: dealerData.business_name,
         invoice_image_url,
-        signature_data_url,
         notes,
         review_status: 'PendingReview'
       })

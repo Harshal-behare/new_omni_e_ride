@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { RoleGate } from '@/components/auth/role-gate'
 import { OmniButton } from '@/components/ui/omni-button'
 import { UserAvatar } from '@/components/ui/user-avatar'
-import { Home, Calendar, ShoppingCart, Users, Menu, ChevronLeft, ChevronRight, Shield, UserCircle, ClipboardList } from 'lucide-react'
+import { Home, Calendar, Menu, ChevronLeft, ChevronRight, Shield, UserCircle, ClipboardList } from 'lucide-react'
 import { useDemoAuth } from '@/components/auth/demo-auth-provider'
 import { cn } from '@/lib/utils'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -39,7 +39,6 @@ export default function DealerLayout({ children }: { children: React.ReactNode }
   const items = [
     { href: '/dealer', icon: <Home className="h-5 w-5" />, label: 'Overview' },
     { href: '/dealer/test-rides', icon: <Calendar className="h-5 w-5" />, label: 'Test Rides' },
-    { href: '/dealer/orders', icon: <ShoppingCart className="h-5 w-5" />, label: 'Orders' },
     { href: '/dealer/warranty', icon: <Shield className="h-5 w-5" />, label: 'Warranty' },
     { href: '/dealer/leads', icon: <ClipboardList className="h-5 w-5" />, label: 'Leads' },
     { href: '/dealer/profile', icon: <UserCircle className="h-5 w-5" />, label: 'Profile' },

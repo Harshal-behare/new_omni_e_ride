@@ -13,19 +13,27 @@ import { format } from 'date-fns'
 interface TestRideData {
   id: string
   vehicle?: {
+    id: string
     name: string
+    slug: string
+    price: number
     images: string[]
   }
   dealer?: {
-    name: string
+    id: string
+    business_name: string
+    business_address: string
     city: string
+    state: string
+    business_phone: string
   }
-  scheduled_date: string
-  scheduled_time: string
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'rejected'
-  rejection_reason?: string
-  payment_status: 'pending' | 'paid' | 'refunded'
-  payment_amount: number
+  preferred_date: string
+  preferred_time: string
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+  cancellation_reason?: string
+  dealer_notes?: string
+  confirmation_code?: string
+  created_at: string
 }
 
 export default function TestRidesPage() {
@@ -42,10 +50,10 @@ export default function TestRidesPage() {
     else setIsLoading(true)
     
     try {
-      const response = await fetch('/api/test-rides/user')
+      const response = await fetch('/api/test-rides')
       if (response.ok) {
         const data = await response.json()
-        setRides(data.testRides || [])
+        setRides(Array.isArray(data) ? data : data.testRides || [])
       } else {
         console.error('Failed to fetch test rides')
         toast.error('Failed to load test rides')
@@ -186,16 +194,16 @@ export default function TestRidesPage() {
                       <div className="flex flex-wrap gap-4 text-sm">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4 text-gray-400" />
-                          <span>{format(new Date(ride.scheduled_date), 'PPP')}</span>
+                          <span>{format(new Date(ride.preferred_date), 'PPP')}</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <Clock className="h-4 w-4 text-gray-400" />
-                          <span>{ride.scheduled_time}</span>
+                          <span>{ride.preferred_time}</span>
                         </div>
                         {ride.dealer && (
                           <div className="flex items-center gap-1">
                             <MapPin className="h-4 w-4 text-gray-400" />
-                            <span>{ride.dealer.name}, {ride.dealer.city}</span>
+                            <span>{ride.dealer.business_name}, {ride.dealer.city}</span>
                           </div>
                         )}
                       </div>
@@ -204,15 +212,25 @@ export default function TestRidesPage() {
                         <Badge className={getStatusColor(ride.status)}>
                           {ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
                         </Badge>
-                        <Badge className={getPaymentStatusColor(ride.payment_status)}>
-                          Payment {ride.payment_status.charAt(0).toUpperCase() + ride.payment_status.slice(1)}
-                        </Badge>
+                        {ride.confirmation_code && (
+                          <Badge variant="outline">
+                            Code: {ride.confirmation_code}
+                          </Badge>
+                        )}
                       </div>
                       
-                      {ride.status === 'rejected' && ride.rejection_reason && (
+                      {ride.status === 'cancelled' && ride.cancellation_reason && (
                         <div className="mt-2 p-3 bg-red-50 border border-red-200 rounded-md">
                           <p className="text-sm text-red-700">
-                            <span className="font-medium">Rejection Reason:</span> {ride.rejection_reason}
+                            <span className="font-medium">Cancellation Reason:</span> {ride.cancellation_reason}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {ride.dealer_notes && (
+                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                          <p className="text-sm text-blue-700">
+                            <span className="font-medium">Dealer Notes:</span> {ride.dealer_notes}
                           </p>
                         </div>
                       )}
@@ -221,12 +239,7 @@ export default function TestRidesPage() {
                   
                   {/* Actions */}
                   <div className="flex flex-col gap-2">
-                    <div className="text-right">
-                      <p className="text-sm text-gray-600">Deposit</p>
-                      <p className="text-lg font-semibold">₹{ride.payment_amount.toLocaleString('en-IN')}</p>
-                    </div>
-                    
-                    {ride.status === 'pending' || ride.status === 'confirmed' && (
+                    {(ride.status === 'pending' || ride.status === 'confirmed') && (
                       <Button
                         variant="outline"
                         size="sm"

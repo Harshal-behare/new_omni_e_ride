@@ -285,71 +285,14 @@ export async function approveDealerApplication(id: string, approved: boolean, re
       
     if (roleError) throw roleError
     
-    // Initialize dealer metrics for current month
-    const currentDate = new Date()
-    const { error: metricsError } = await supabase
-      .from('dealer_metrics')
-      .insert([{
-        dealer_id: application.user_id,
-        period_month: currentDate.getMonth() + 1,
-        period_year: currentDate.getFullYear()
-      }])
-      
-    if (metricsError && metricsError.code !== '23505') { // Ignore duplicate key error
-      console.error('Error initializing dealer metrics:', metricsError)
-    }
+    // Dealer metrics are now calculated dynamically from existing tables
   }
   
   return updatedApplication
 }
 
-// Dealer Metrics Operations
-export async function getDealerMetrics(dealerId: string, year?: number, month?: number) {
-  const supabase = createClient()
-  
-  let query = supabase
-    .from('dealer_metrics')
-    .select('*')
-    .eq('dealer_id', dealerId)
-    
-  if (year) {
-    query = query.eq('period_year', year)
-  }
-  
-  if (month) {
-    query = query.eq('period_month', month)
-  }
-  
-  query = query.order('period_year', { ascending: false })
-    .order('period_month', { ascending: false })
-    
-  const { data, error } = await query
-  
-  if (error) throw error
-  return data
-}
+// Dealer Metrics Operations moved to dealers-metrics.ts
 
-export async function updateDealerMetrics(dealerId: string, metrics: Partial<DealerMetrics>) {
-  const supabase = createClient()
-  
-  const currentDate = new Date()
-  const period_month = metrics.period_month || currentDate.getMonth() + 1
-  const period_year = metrics.period_year || currentDate.getFullYear()
-  
-  const { data, error } = await supabase
-    .from('dealer_metrics')
-    .upsert({
-      ...metrics,
-      dealer_id: dealerId,
-      period_month,
-      period_year
-    })
-    .select()
-    .single()
-    
-  if (error) throw error
-  return data
-}
 
 
 // Document Upload Operations
@@ -393,60 +336,4 @@ export async function deleteDealerDocument(filePath: string) {
   return true
 }
 
-// Helper function to get dealer stats
-export async function getDealerStats(dealerId: string) {
-  const supabase = createClient()
-  
-  // Get current month metrics
-  const currentDate = new Date()
-  const currentMonth = currentDate.getMonth() + 1
-  const currentYear = currentDate.getFullYear()
-  
-  const { data: currentMetrics } = await supabase
-    .from('dealer_metrics')
-    .select('*')
-    .eq('dealer_id', dealerId)
-    .eq('period_month', currentMonth)
-    .eq('period_year', currentYear)
-    .single()
-    
-  // Get previous month metrics for comparison
-  const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1
-  const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear
-  
-  const { data: previousMetrics } = await supabase
-    .from('dealer_metrics')
-    .select('*')
-    .eq('dealer_id', dealerId)
-    .eq('period_month', previousMonth)
-    .eq('period_year', previousYear)
-    .single()
-    
-  // Since we don't have dealer_inventory table, we'll use metrics for inventory data
-  const inventoryStats = {
-    total: currentMetrics?.total_inventory || 0,
-    reserved: currentMetrics?.reserved_units || 0,
-    sold: currentMetrics?.sold_units || 0,
-    available: (currentMetrics?.total_inventory || 0) - (currentMetrics?.reserved_units || 0)
-  }
-  
-  return {
-    current: currentMetrics || {
-      total_sales: 0,
-      total_revenue: 0,
-      monthly_sales: 0,
-      monthly_revenue: 0,
-      conversion_rate: 0,
-      average_sale_value: 0,
-      customer_satisfaction_score: 0
-    },
-    previous: previousMetrics,
-    inventory: inventoryStats,
-    growth: previousMetrics ? {
-      sales: previousMetrics.monthly_sales ? 
-        ((currentMetrics?.monthly_sales || 0) - previousMetrics.monthly_sales) / previousMetrics.monthly_sales * 100 : 0,
-      revenue: previousMetrics.monthly_revenue ? 
-        ((currentMetrics?.monthly_revenue || 0) - previousMetrics.monthly_revenue) / previousMetrics.monthly_revenue * 100 : 0
-    } : null
-  }
-}
+// getDealerStats moved to dealers-metrics.ts

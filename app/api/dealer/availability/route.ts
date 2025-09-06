@@ -163,11 +163,34 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { dealerId, date } = body
     
-    if (!dealerId || !date) {
+    if (!date) {
       return NextResponse.json(
-        { error: 'Dealer ID and date are required' },
+        { error: 'Date is required' },
         { status: 400 }
       )
+    }
+    
+    // If no dealer ID provided, return generic availability
+    if (!dealerId) {
+      const dayOfWeek = new Date(date).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+      const defaultSlots = [
+        { time: '09:00', available: 2, total: 2 },
+        { time: '10:00', available: 2, total: 2 },
+        { time: '11:00', available: 2, total: 2 },
+        { time: '12:00', available: 2, total: 2 },
+        { time: '14:00', available: 2, total: 2 },
+        { time: '15:00', available: 2, total: 2 },
+        { time: '16:00', available: 2, total: 2 },
+        { time: '17:00', available: 2, total: 2 },
+        { time: '18:00', available: 2, total: 2 }
+      ]
+      
+      return NextResponse.json({
+        available: dayOfWeek !== 'sunday',
+        date,
+        dayOfWeek,
+        slots: dayOfWeek === 'sunday' ? [] : defaultSlots
+      })
     }
     
     // Get dealer availability settings

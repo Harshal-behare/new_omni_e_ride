@@ -7,6 +7,7 @@ import WarrantyInfo from '@/components/warranty/warranty-info'
 import SiteHeader from '@/components/site-header'
 import SiteFooter from '@/components/site-footer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { WarrantyLookup } from '@/components/warranty/warranty-lookup'
 
 export default function WarrantyPage() {
   return (
@@ -174,8 +175,13 @@ export default function WarrantyPage() {
         </p>
       </section>
 
+      {/* Warranty Lookup Section */}
+      <section className="mt-8">
+        <WarrantyLookup />
+      </section>
+
       {/* Additional Information */}
-      <section className="grid gap-6 md:grid-cols-2">
+      <section className="grid gap-6 md:grid-cols-2 mt-8">
         <Card>
           <CardHeader>
             <CardTitle>Important Reminders</CardTitle>

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useTestRideBooking } from '@/hooks/use-test-ride-booking'
+import { useTestRidePayment } from '@/hooks/use-test-ride-payment'
 import { ArrowLeft, Car, MapPin, CreditCard, AlertCircle } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import Link from 'next/link'
@@ -35,8 +35,7 @@ interface Vehicle {
 
 export default function NewTestRidePage() {
   const router = useRouter()
-  const { bookTestRide, isBooking, error, resetError } = useTestRideBooking()
-  
+  const { bookTestRideWithPayment, isBooking, isProcessingPayment } = useTestRidePayment()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [loadingVehicles, setLoadingVehicles] = useState(true)
   const [dealers, setDealers] = useState<Dealer[]>([])
@@ -123,7 +122,7 @@ export default function NewTestRidePage() {
       return
     }
     
-    const result = await bookTestRide({
+    const result = await bookTestRideWithPayment({
       vehicleId: selectedVehicle,
       dealershipId: selectedDealer && selectedDealer !== 'any' ? selectedDealer : null,
       preferredDate: selectedDate,
@@ -134,7 +133,9 @@ export default function NewTestRidePage() {
       address: 'User Address',
       city: 'New Delhi',
       state: 'Delhi',
-      pincode: '110001'
+      pincode: '110001',
+      // TODO: Remove this once Razorpay is configured
+      skipPayment: !process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID === 'rzp_test_your_key_id'
     })
     
     // The hook already handles navigation and toast messages
@@ -307,10 +308,11 @@ export default function NewTestRidePage() {
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <h4 className="font-medium mb-2">What happens next?</h4>
                   <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                    <li>• Pay ₹2,000 refundable deposit</li>
                     <li>• You'll receive a confirmation code instantly</li>
                     <li>• Our dealer will contact you within 24 hours</li>
                     <li>• Show the confirmation code at the dealership</li>
-                    <li>• Enjoy your test ride!</li>
+                    <li>• Deposit will be refunded after the test ride</li>
                   </ul>
                 </div>
                 
@@ -323,29 +325,20 @@ export default function NewTestRidePage() {
             </CardContent>
           </Card>
 
-          {/* Error Display */}
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {error.message}
-                {error.type === 'duplicate' && (
-                  <p className="mt-2 text-sm">
-                    Please check your existing bookings or choose a different time slot.
-                  </p>
-                )}
-              </AlertDescription>
-            </Alert>
-          )}
 
           {/* Submit Button */}
           <Button
             type="submit"
             size="lg"
             className="w-full"
-            disabled={isBooking || !selectedVehicle || !selectedDate || !selectedTime}
+            disabled={isBooking || isProcessingPayment || !selectedVehicle || !selectedDate || !selectedTime}
           >
-            {isBooking ? (
+            {isProcessingPayment ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Processing payment...
+              </>
+            ) : isBooking ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 Booking your test ride...
@@ -353,7 +346,7 @@ export default function NewTestRidePage() {
             ) : (
               <>
                 <CreditCard className="h-5 w-5 mr-2" />
-                Book Test Ride
+                Pay ₹2,000 & Book Test Ride
               </>
             )}
           </Button>

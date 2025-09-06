@@ -94,7 +94,51 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Warranty not found' }, { status: 404 })
     }
 
-    // TODO: Send email notification to customer about warranty status
+    // Create notifications for both dealer and customer
+    try {
+      // Get dealer user_id
+      const { data: dealer } = await supabase
+        .from('dealers')
+        .select('user_id')
+        .eq('id', warranty.dealer_id)
+        .single()
+
+      if (dealer?.user_id) {
+        // Notify dealer
+        await supabase.from('notifications').insert({
+          user_id: dealer.user_id,
+          title: `Warranty ${review_status}`,
+          message: `Warranty registration for ${warranty.customer_name} (${warranty.vehicle_model}) has been ${review_status.toLowerCase()}.${notes ? ` Reason: ${notes}` : ''}`,
+          type: 'warranty',
+          priority: review_status === 'Declined' ? 'high' : 'normal',
+          data: { warranty_id: warranty.id, status: review_status }
+        })
+      }
+
+      // Check if customer has an account by email
+      const { data: customerProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', warranty.customer_email)
+        .single()
+
+      if (customerProfile?.id) {
+        // Notify customer
+        await supabase.from('notifications').insert({
+          user_id: customerProfile.id,
+          title: `Warranty ${review_status}`,
+          message: review_status === 'Approved' 
+            ? `Your warranty for ${warranty.vehicle_model} has been approved! Valid for ${warranty.period_years} year(s) from ${new Date(warranty.purchase_date).toLocaleDateString()}.`
+            : `Your warranty for ${warranty.vehicle_model} has been declined.${notes ? ` Reason: ${notes}` : ''} Please contact your dealer for assistance.`,
+          type: 'warranty',
+          priority: 'high',
+          data: { warranty_id: warranty.id, status: review_status }
+        })
+      }
+    } catch (notificationError) {
+      console.error('Error creating notifications:', notificationError)
+      // Don't fail the whole operation if notifications fail
+    }
 
     return NextResponse.json({ 
       success: true,

@@ -20,6 +20,7 @@ OMNI E-RIDE is a comprehensive electric mobility platform built with Next.js 15 
 ## Common Development Commands
 
 ### Development & Build
+
 ```bash
 # Start development server
 pnpm run dev
@@ -35,6 +36,7 @@ pnpm run lint
 ```
 
 ### Database Operations
+
 ```bash
 # Push database schema to Supabase
 npx supabase db push
@@ -47,12 +49,14 @@ npx tsx scripts/seed-sample-data.ts
 ```
 
 ### Email Development
+
 ```bash
 # Start email preview server (port 3001)
 pnpm run email:dev
 ```
 
 ### Environment Setup
+
 ```bash
 # Copy environment variables
 cp .env.example .env.local
@@ -75,6 +79,8 @@ The application uses Supabase Auth with middleware-based role checking:
 
 ### Database Structure
 
+For schema check the file database_schema.sql
+
 Key tables and their relationships:
 
 ```
@@ -88,6 +94,7 @@ dealer_applications → warranties → payments
 ```
 
 Primary entities:
+
 - `profiles` - User accounts with role designation
 - `vehicles` - Product catalog with specifications
 - `test_rides` - Booking system with dealer assignment
@@ -108,6 +115,7 @@ The application follows Next.js 15 App Router conventions:
 ```
 
 Example patterns:
+
 - `GET /api/test-rides` - List user's test rides
 - `POST /api/test-rides/book-simple` - Create booking
 - `PUT /api/dealer/test-rides` - Update booking status
@@ -120,19 +128,25 @@ The platform uses Supabase Realtime for live updates:
 ```typescript
 // Pattern used in hooks/useRealtime.ts
 supabase
-  .channel('custom-channel')
-  .on('postgres_changes', { 
-    event: '*', 
-    schema: 'public', 
-    table: 'orders' 
-  }, handleUpdate)
-  .subscribe()
+  .channel("custom-channel")
+  .on(
+    "postgres_changes",
+    {
+      event: "*",
+      schema: "public",
+      table: "orders",
+    },
+    handleUpdate
+  )
+  .subscribe();
 ```
 
 ## Directory Structure
 
 ### `/app` - Application Routes
+
 Organized by user role and feature:
+
 - `/app/(auth)` - Login/signup pages
 - `/app/dashboard` - Customer portal pages
 - `/app/dealer` - Dealer management interface
@@ -140,12 +154,14 @@ Organized by user role and feature:
 - `/app/api` - API endpoints and server actions
 
 ### `/components` - UI Components
+
 - `/components/ui` - shadcn/ui primitives
 - `/components/sections` - Page sections (hero, testimonials)
 - `/components/dashboard` - Dashboard-specific components
 - `/components/realtime` - Live update components
 
 ### `/lib` - Core Utilities
+
 - `/lib/supabase` - Database client configuration
 - `/lib/api` - API utility functions
 - `/lib/validation` - Zod schemas
@@ -153,13 +169,16 @@ Organized by user role and feature:
 - `/lib/stores` - Zustand state stores
 
 ### `/emails` - Email Templates
+
 React Email components for notifications:
+
 - Welcome emails
 - Order confirmations
 - Test ride confirmations
 - Dealer application updates
 
 ### `/hooks` - Custom React Hooks
+
 - `use-razorpay` - Payment processing
 - `use-realtime` - Live subscriptions
 - `use-simple-booking` - Test ride booking
@@ -167,6 +186,7 @@ React Email components for notifications:
 ## Key Workflows
 
 ### Test Ride Booking Flow
+
 1. Customer browses vehicles at `/dashboard/vehicles`
 2. Clicks "Book Test Ride" → `/dashboard/test-rides/new`
 3. Selects date, time, and optional dealer preference
@@ -176,6 +196,7 @@ React Email components for notifications:
 7. Status updates: `pending` → `confirmed` → `completed`
 
 ### Order Management Flow
+
 1. Customer selects vehicle and proceeds to checkout
 2. Razorpay order created via `/api/orders/checkout`
 3. Payment processed through Razorpay SDK
@@ -184,6 +205,7 @@ React Email components for notifications:
 6. Dealer notified of new order
 
 ### Dealer Application Process
+
 1. User submits application at `/dashboard/dealer-application`
 2. Admin reviews at `/admin/dealer-applications`
 3. Admin can request documents or additional info
@@ -196,6 +218,7 @@ React Email components for notifications:
 ### Environment Variables
 
 Required variables in `.env.local`:
+
 ```env
 # Supabase (Required)
 NEXT_PUBLIC_SUPABASE_URL=
@@ -215,6 +238,7 @@ NEXT_PUBLIC_RAZORPAY_KEY_ID=
 ### Database Migrations
 
 When modifying database schema:
+
 1. Create migration: `npx supabase migration new descriptive_name`
 2. Edit the generated SQL file in `/supabase/migrations`
 3. Test locally: `npx supabase db push`
@@ -226,24 +250,24 @@ The project uses composition patterns with shadcn/ui:
 
 ```tsx
 // Example component structure
-import { Button } from "@/components/ui/button"
-import { useToast } from "@/hooks/use-toast"
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 export function MyComponent() {
-  const { toast } = useToast()
-  
+  const { toast } = useToast();
+
   // Component logic with proper error handling
   const handleAction = async () => {
     try {
       // Action logic
-      toast({ title: "Success" })
+      toast({ title: "Success" });
     } catch (error) {
-      toast({ 
+      toast({
         title: "Error",
-        variant: "destructive" 
-      })
+        variant: "destructive",
+      });
     }
-  }
+  };
 }
 ```
 
@@ -262,13 +286,10 @@ Consistent error handling across the application:
 // API Routes
 try {
   // Operation
-  return NextResponse.json({ success: true, data })
+  return NextResponse.json({ success: true, data });
 } catch (error) {
-  console.error('Operation failed:', error)
-  return NextResponse.json(
-    { error: 'Operation failed' },
-    { status: 500 }
-  )
+  console.error("Operation failed:", error);
+  return NextResponse.json({ error: "Operation failed" }, { status: 500 });
 }
 ```
 
@@ -277,14 +298,17 @@ try {
 ### Common Issues
 
 1. **"Invalid input syntax for type uuid"**
+
    - Ensure all ID parameters are valid UUIDs
    - Check dealer/vehicle IDs in test ride bookings
 
 2. **Supabase Auth Errors**
+
    - Verify environment variables are set correctly
    - Check Supabase project is active and not paused
 
 3. **Email Not Sending**
+
    - Confirm RESEND_API_KEY is valid
    - Verify sender domain in Resend dashboard
 

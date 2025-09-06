@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { MODELS } from '@/lib/models-data'
 import { OmniButton } from '@/components/ui/omni-button'
-import { SignaturePad } from './signature-pad'
+// import { SignaturePad } from './signature-pad' // Signature not required
 // import { submitWarranty } from '@/lib/stores/warranties' // No longer using localStorage
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -29,7 +29,6 @@ export function WarrantyRegistrationForm({
   const model = MODELS.find((m) => m.id === modelId)!
   const [periodYears, setPeriodYears] = React.useState<1 | 2 | 3>(2)
   const [invoice, setInvoice] = React.useState<string>('')
-  const [sig, setSig] = React.useState<string>('')
   const [agree, setAgree] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
   const [submitStatus, setSubmitStatus] = React.useState<{ type: 'success' | 'error', message: string } | null>(null)
@@ -80,7 +79,6 @@ export function WarrantyRegistrationForm({
           purchase_date: purchaseDate,
           period_years: periodYears,
           invoice_image_url: invoice,
-          signature_data_url: sig,
         })
       })
 
@@ -115,7 +113,6 @@ export function WarrantyRegistrationForm({
       // Reset form
       e.currentTarget.reset()
       setInvoice('')
-      setSig('')
       setAgree(false)
     } catch (error) {
       console.error('Warranty submission error:', error)
@@ -156,13 +153,10 @@ export function WarrantyRegistrationForm({
         </div>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div>
-          <Label className="text-sm">Purchase Invoice (photo)</Label>
-          <input type="file" accept="image/*" className="mt-1 block w-full text-sm" onChange={onFile} />
-          {invoice && <img src={invoice || "/placeholder.svg"} alt="Invoice preview" className="mt-2 h-28 w-auto rounded border object-contain" />}
-        </div>
-        <SignaturePad onChange={setSig} />
+      <div>
+        <Label className="text-sm">Purchase Invoice (photo)</Label>
+        <input type="file" accept="image/*" className="mt-1 block w-full text-sm" onChange={onFile} />
+        {invoice && <img src={invoice || "/placeholder.svg"} alt="Invoice preview" className="mt-2 h-28 w-auto rounded border object-contain" />}
       </div>
 
       <label className="mt-2 inline-flex items-start gap-2 text-sm">

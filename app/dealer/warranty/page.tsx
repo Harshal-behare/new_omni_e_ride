@@ -6,7 +6,8 @@ import { WarrantyRegistrationForm } from '@/components/warranty/warranty-registr
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { WarrantyStateBadge } from '@/components/warranty/status-badge'
 import { toast } from 'react-hot-toast'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Bell } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 interface WarrantyRecord {
   id: string
@@ -34,7 +35,41 @@ export default function DealerWarrantyPage() {
 
   React.useEffect(() => {
     fetchWarranties()
-  }, [])
+
+    // Set up real-time subscription for warranty updates
+    const supabase = createClient()
+    const channel = supabase
+      .channel('dealer-warranty-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'warranty_registrations',
+          filter: `dealer_id=eq.${dealerId}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+            // Show notification for status changes
+            if (payload.new && payload.old && payload.new.review_status !== payload.old?.review_status) {
+              const status = payload.new.review_status
+              if (status === 'Approved') {
+                toast.success('Warranty approved by admin!', { icon: '✅' })
+              } else if (status === 'Declined') {
+                toast.error('Warranty declined by admin', { icon: '❌' })
+              }
+            }
+            // Refresh the warranty list
+            fetchWarranties()
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [dealerId])
 
   async function fetchWarranties() {
     setLoading(true)

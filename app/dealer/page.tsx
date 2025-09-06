@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { OmniButton } from '@/components/ui/omni-button'
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
-import { getDealerStats, getDealerMetrics } from '@/lib/api/dealers'
+import { getDealerStats, getDealerMetrics } from '@/lib/api/dealers-metrics'
 import { createClient } from '@/lib/supabase/client'
-import { TrendingUp, TrendingDown, Package, DollarSign, Users, ShoppingCart, Calendar, Car, ClipboardList, Activity, RefreshCw } from 'lucide-react'
+import { TrendingUp, TrendingDown, Package, DollarSign, Users, Calendar, Car, ClipboardList, Activity, RefreshCw } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { cn } from '@/lib/utils'
 
@@ -37,6 +37,18 @@ export default function DealerOverviewPage() {
         return
       }
 
+      // First get the dealer record
+      const { data: dealerRecord } = await supabase
+        .from('dealers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single()
+      
+      if (!dealerRecord) {
+        setError('Dealer profile not found')
+        return
+      }
+      
       // Load dealer stats
       const dealerStats = await getDealerStats(user.id)
       setStats(dealerStats)
@@ -70,7 +82,7 @@ export default function DealerOverviewPage() {
       const { data: testRides } = await supabase
         .from('test_rides')
         .select('id, status, preferred_date')
-        .eq('dealer_id', user.id)
+        .eq('dealer_id', dealerRecord.id)
         .gte('preferred_date', new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString())
         .lte('preferred_date', new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString())
       
@@ -87,7 +99,7 @@ export default function DealerOverviewPage() {
       const { data: leads } = await supabase
         .from('leads')
         .select('id, status, created_at')
-        .eq('dealer_id', user.id)
+        .eq('dealer_id', dealerRecord.id)
         .gte('created_at', new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString())
       
       const leadData = {
@@ -99,42 +111,48 @@ export default function DealerOverviewPage() {
       }
       setLeadStats(leadData)
 
-      // Load recent activities
-      const { data: recentOrders } = await supabase
-        .from('orders')
-        .select('id, created_at, total_amount, status, vehicle_id')
-        .eq('dealer_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5)
+      // Load recent activities from test rides and leads
+      const activities = []
       
-      // Fetch vehicle names for orders
-      let vehicleNames: Record<string, string> = {}
-      if (recentOrders && recentOrders.length > 0) {
-        const vehicleIds = recentOrders.map(order => order.vehicle_id).filter(Boolean)
-        if (vehicleIds.length > 0) {
-          const { data: vehicles } = await supabase
-            .from('vehicles')
-            .select('id, name')
-            .in('id', vehicleIds)
-          
-          if (vehicles) {
-            vehicleNames = vehicles.reduce((acc, vehicle) => {
-              acc[vehicle.id] = vehicle.name
-              return acc
-            }, {} as Record<string, string>)
-          }
-        }
+      // Add recent test rides to activities
+      const { data: recentTestRides } = await supabase
+        .from('test_rides')
+        .select('id, created_at, status, vehicle_id, vehicles(name)')
+        .eq('dealer_id', dealerRecord.id)
+        .order('created_at', { ascending: false })
+        .limit(3)
+      
+      if (recentTestRides) {
+        activities.push(...recentTestRides.map(ride => ({
+          type: 'test_ride',
+          title: `Test ride booking #${ride.id.slice(0, 8)}`,
+          description: `${ride.vehicles?.name || 'Vehicle'} - ${ride.status}`,
+          status: ride.status,
+          time: new Date(ride.created_at).toLocaleString()
+        })))
       }
       
-      const activities = recentOrders?.map(order => ({
-        type: 'order',
-        title: `New order #${order.id.slice(0, 8)}`,
-        description: `${vehicleNames[order.vehicle_id] || 'Vehicle'} - ₹${order.total_amount}`,
-        status: order.status,
-        time: new Date(order.created_at).toLocaleString()
-      })) || []
+      // Add recent leads to activities
+      const { data: recentLeads } = await supabase
+        .from('leads')
+        .select('id, created_at, status, name')
+        .eq('dealer_id', dealerRecord.id)
+        .order('created_at', { ascending: false })
+        .limit(2)
       
-      setRecentActivities(activities)
+      if (recentLeads) {
+        activities.push(...recentLeads.map(lead => ({
+          type: 'lead',
+          title: `New lead: ${lead.name}`,
+          description: `Status: ${lead.status}`,
+          status: lead.status,
+          time: new Date(lead.created_at).toLocaleString()
+        })))
+      }
+      
+      // Sort activities by time
+      activities.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+      setRecentActivities(activities.slice(0, 5))
     } catch (err: any) {
       console.error('Error loading dealer data:', err)
       setError(err.message)
@@ -177,21 +195,20 @@ export default function DealerOverviewPage() {
       {/* KPI Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KPICard 
-          label="Monthly Sales" 
-          value={currentMetrics.monthly_sales || 0}
+          label="Test Rides" 
+          value={testRideStats?.total || 0}
           prefix=""
-          suffix=" units"
-          icon={<ShoppingCart className="h-5 w-5" />}
-          trend={growth?.sales}
+          suffix=""
+          icon={<Calendar className="h-5 w-5" />}
+          subtext={`${testRideStats?.completed || 0} completed`}
         />
         <KPICard 
-          label="Monthly Revenue" 
-          value={currentMetrics.monthly_revenue || 0}
-          prefix="₹"
+          label="Leads" 
+          value={leadStats?.total || 0}
+          prefix=""
           suffix=""
-          icon={<DollarSign className="h-5 w-5" />}
-          trend={growth?.revenue}
-          format
+          icon={<ClipboardList className="h-5 w-5" />}
+          subtext={`${leadStats?.qualified || 0} qualified`}
         />
         <KPICard 
           label="Total Inventory" 
@@ -214,27 +231,12 @@ export default function DealerOverviewPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Sales & Revenue Trend</CardTitle>
+            <CardTitle>Activity Trend</CardTitle>
           </CardHeader>
           <CardContent className="h-64">
-            {monthlyMetrics.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyMetrics}>
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip formatter={(value: any, name: string) => {
-                    if (name === 'Revenue (₹K)') return `₹${value}K`
-                    return value
-                  }} />
-                  <Area type="monotone" dataKey="sales" stroke="#10b981" fill="#d1fae5" name="Sales (units)" />
-                  <Area type="monotone" dataKey="revenue" stroke="#059669" fill="#bbf7d0" name="Revenue (₹K)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                No data available
-              </div>
-            )}
+            <div className="flex items-center justify-center h-full text-gray-500">
+              Activity charts coming soon
+            </div>
           </CardContent>
         </Card>
         

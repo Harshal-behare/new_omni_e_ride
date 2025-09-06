@@ -142,7 +142,7 @@ export default function CustomerWarrantyPage() {
                   <div className="flex flex-wrap gap-2">
                     <WarrantyButton
                       purchaseDate={warranty.purchase_date}
-                      periodYears={warranty.period_years}
+                      periodYears={warranty.period_years as 1 | 2 | 3}
                       showProgress
                       tooltip="Download your certificate"
                       confirm={{ title: 'Download Certificate', message: 'Generate a print-ready warranty certificate?' }}
@@ -182,7 +182,7 @@ export default function CustomerWarrantyPage() {
               <CardContent>
                 <WarrantyTimeline 
                   purchaseDate={warranties[0].purchase_date} 
-                  years={warranties[0].period_years} 
+                  years={warranties[0].period_years as 1 | 2 | 3} 
                 />
               </CardContent>
             </Card>

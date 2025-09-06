@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { getDealerMetrics, updateDealerMetrics } from '@/lib/api/dealers'
+import { getDealerMetrics, updateDealerMetrics } from '@/lib/api/dealers-metrics'
 
 export async function GET(
   request: NextRequest,

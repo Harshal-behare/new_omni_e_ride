@@ -48,7 +48,7 @@ export default function DealerWarrantyPage() {
           table: 'warranty_registrations',
           filter: `dealer_id=eq.${dealerId}`,
         },
-        (payload) => {
+        (payload: any) => {
           if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
             // Show notification for status changes
             if (payload.new && payload.old && payload.new.review_status !== payload.old?.review_status) {

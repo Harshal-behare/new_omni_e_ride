@@ -117,13 +117,13 @@ export default function DealerOverviewPage() {
       // Add recent test rides to activities
       const { data: recentTestRides } = await supabase
         .from('test_rides')
-        .select('id, created_at, status, vehicle_id, vehicles(name)')
+        .select('id, created_at, status, vehicle_id, vehicles!inner(name)')
         .eq('dealer_id', dealerRecord.id)
         .order('created_at', { ascending: false })
         .limit(3)
       
       if (recentTestRides) {
-        activities.push(...recentTestRides.map(ride => ({
+        activities.push(...recentTestRides.map((ride: any) => ({
           type: 'test_ride',
           title: `Test ride booking #${ride.id.slice(0, 8)}`,
           description: `${ride.vehicles?.name || 'Vehicle'} - ${ride.status}`,

@@ -137,3 +137,11 @@ export async function getDealerStats(dealerId: string) {
     } : null
   }
 }
+
+// Update dealer metrics (placeholder function since metrics are calculated dynamically)
+export async function updateDealerMetrics(dealerId: string, metrics: Partial<any>) {
+  // Since we calculate metrics dynamically from existing tables,
+  // this function doesn't need to do anything
+  // It's here for API compatibility
+  return { success: true, message: 'Metrics are calculated dynamically' }
+}

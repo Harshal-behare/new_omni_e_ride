@@ -1,5 +1,4 @@
 # Razorpay Setup Guide for Omni E-Ride
-
 ## Getting Your Razorpay Credentials
 
 1. **Sign up / Login to Razorpay**

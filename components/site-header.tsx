@@ -88,19 +88,17 @@ export default function SiteHeader() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              // Temporarily hidden - Login and Signup buttons
               <div className="hidden sm:flex items-center gap-2">
-                {/* <Link href="/login" className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-emerald-700 hover:bg-emerald-50">
+                <Link href="/login" className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-emerald-700 hover:bg-emerald-50">
                   <LogIn className="h-4 w-4" />
                   <span className="text-sm font-semibold">Login</span>
                 </Link>
                 <Link href="/signup" className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-2 text-white hover:bg-emerald-700">
                   <UserPlus className="h-4 w-4" />
                   <span className="text-sm font-semibold">Sign Up</span>
-                </Link> */}
+                </Link>
               </div>
             )}
-
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="outline" className="md:hidden rounded-lg">
@@ -138,16 +136,14 @@ export default function SiteHeader() {
                         <button onClick={handleLogout} className="rounded-lg px-3 py-2 text-left hover:bg-gray-100">Log out</button>
                       </>
                     ) : (
-                      // Temporarily hidden - Login and Signup buttons for mobile
-                      <></>
-                      // <>
-                      //   <Link href="/login" className="inline-flex items-center gap-2 rounded-lg border px-3 py-2">
-                      //     <User className="h-4 w-4" /> Login
-                      //   </Link>
-                      //   <Link href="/signup" className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-white">
-                      //     <UserPlus className="h-4 w-4" /> Sign Up
-                      //   </Link>
-                      // </>
+                      <>
+                        <Link href="/login" className="inline-flex items-center gap-2 rounded-lg border px-3 py-2">
+                          <User className="h-4 w-4" /> Login
+                        </Link>
+                        <Link href="/signup" className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-white">
+                          <UserPlus className="h-4 w-4" /> Sign Up
+                        </Link>
+                      </>
                     )}
                   </div>
                 </div>

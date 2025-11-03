@@ -94,7 +94,7 @@ export default function DealerLocations() {
             <h3 className="text-white text-xl font-semibold mb-2">Omni ElectraRide Showroom</h3>
             <p className="text-white/90 text-sm mb-3">NH-107, Yadav Chowk, Saharsa, Bihar - 852201</p>
             <a 
-              href="https://www.google.com/maps/place/Omni+ElectraRide+Showroom/@25.8789055,86.6212866" 
+              href="https://maps.app.goo.gl/ZErZHqAFH44vJSEH6?g_st=ipc" 
               target="_blank" 
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition"

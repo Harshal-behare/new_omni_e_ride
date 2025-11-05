@@ -172,6 +172,7 @@ export interface Database {
           city: string
           state: string
           pincode: string
+          google_maps_link: string | null
           is_active: boolean
           created_at: string
           updated_at: string
@@ -185,6 +186,7 @@ export interface Database {
           city: string
           state: string
           pincode: string
+          google_maps_link?: string | null
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -198,6 +200,7 @@ export interface Database {
           city?: string
           state?: string
           pincode?: string
+          google_maps_link?: string | null
           is_active?: boolean
           created_at?: string
           updated_at?: string

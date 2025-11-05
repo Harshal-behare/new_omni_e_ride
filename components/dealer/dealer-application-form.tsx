@@ -21,6 +21,7 @@ interface DealerApplicationFormData {
   pincode: string
   business_phone: string
   business_email: string
+  google_maps_link?: string
   gst_number: string
   pan_number: string
   aadhar_number: string
@@ -61,6 +62,7 @@ export function DealerApplicationForm() {
     pincode: '',
     business_phone: '',
     business_email: '',
+    google_maps_link: '',
     gst_number: '',
     pan_number: '',
     aadhar_number: '',
@@ -300,6 +302,20 @@ export function DealerApplicationForm() {
                 required
               />
             </div>
+          </div>
+          <div>
+            <Label htmlFor="google_maps_link">Google Maps Link</Label>
+            <Input
+              id="google_maps_link"
+              name="google_maps_link"
+              value={formData.google_maps_link}
+              onChange={handleInputChange}
+              placeholder="https://maps.app.goo.gl/..."
+              type="url"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Share your location from Google Maps and paste the link here
+            </p>
           </div>
         </CardContent>
       </Card>

@@ -1,10 +1,12 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel'
 import Autoplay from 'embla-carousel-autoplay'
 import { Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
 type Testimonial = {
   id: string
@@ -17,7 +19,8 @@ type Testimonial = {
   verified?: boolean
 }
 
-const testimonials: Testimonial[] = [
+// Fallback demo data in case database fetch fails
+const demoTestimonials: Testimonial[] = [
   {
     id: 't1',
     name: 'Amit Singh',
@@ -81,6 +84,53 @@ const testimonials: Testimonial[] = [
 ]
 
 export default function Testimonials() {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(demoTestimonials)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchTestimonials() {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('customer_feedback')
+          .select('id, name, location, rating, feedback_text, vehicle_purchased, photo_url, verified')
+          .eq('status', 'approved')
+          .eq('display_on_homepage', true)
+          .order('created_at', { ascending: false })
+          .limit(12)
+
+        if (error) {
+          console.error('Error fetching testimonials:', error)
+          // Keep demo data on error
+          return
+        }
+
+        if (data && data.length > 0) {
+          // Map database data to Testimonial type
+          const fetchedTestimonials: Testimonial[] = data.map((item) => ({
+            id: item.id,
+            name: item.name,
+            location: item.location,
+            rating: item.rating,
+            text: item.feedback_text,
+            purchased: item.vehicle_purchased || 'OMNI Vehicle',
+            photo: item.photo_url || '/placeholder.svg?height=120&width=120',
+            verified: item.verified || false,
+          }))
+          setTestimonials(fetchedTestimonials)
+        }
+        // If no data, keep demo testimonials
+      } catch (err) {
+        console.error('Failed to fetch testimonials:', err)
+        // Keep demo data on error
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTestimonials()
+  }, [])
+
   return (
     <section className="bg-gradient-to-r from-emerald-500 to-emerald-600">
       <div className="mx-auto max-w-7xl px-4 py-14">
@@ -89,21 +139,27 @@ export default function Testimonials() {
           <p className="text-emerald-100">Real stories from riders across India</p>
         </div>
 
-        <Carousel
-          opts={{ align: 'start', loop: true }}
-          plugins={[Autoplay({ delay: 4000, stopOnInteraction: true })]}
-          className="w-full"
-        >
-          <CarouselContent>
-            {testimonials.map((t) => (
-              <CarouselItem key={t.id} className="basis-full sm:basis-1/2 lg:basis-1/3">
-                <TestimonialCard t={t} />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="left-0 bg-white text-emerald-700 hover:bg-emerald-50" />
-          <CarouselNext className="right-0 bg-white text-emerald-700 hover:bg-emerald-50" />
-        </Carousel>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-white border-t-transparent"></div>
+          </div>
+        ) : (
+          <Carousel
+            opts={{ align: 'start', loop: true }}
+            plugins={[Autoplay({ delay: 4000, stopOnInteraction: true })]}
+            className="w-full"
+          >
+            <CarouselContent>
+              {testimonials.map((t) => (
+                <CarouselItem key={t.id} className="basis-full sm:basis-1/2 lg:basis-1/3">
+                  <TestimonialCard t={t} />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-0 bg-white text-emerald-700 hover:bg-emerald-50" />
+            <CarouselNext className="right-0 bg-white text-emerald-700 hover:bg-emerald-50" />
+          </Carousel>
+        )}
       </div>
     </section>
   )

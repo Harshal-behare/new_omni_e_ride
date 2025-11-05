@@ -111,6 +111,7 @@ export async function PUT(request: NextRequest) {
       business_address,
       business_phone,
       business_email,
+      google_maps_link,
       gst_number,
       pan_number
     } = body
@@ -156,6 +157,7 @@ export async function PUT(request: NextRequest) {
     if (business_address !== undefined) dealerUpdateData.business_address = business_address
     if (business_phone !== undefined) dealerUpdateData.business_phone = business_phone
     if (business_email !== undefined) dealerUpdateData.business_email = business_email
+    if (google_maps_link !== undefined) dealerUpdateData.google_maps_link = google_maps_link
     if (gst_number !== undefined) dealerUpdateData.gst_number = gst_number
     if (pan_number !== undefined) dealerUpdateData.pan_number = pan_number
     

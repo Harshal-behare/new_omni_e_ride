@@ -43,11 +43,11 @@ export default function WarrantyPage() {
             <ul className="space-y-2 text-sm">
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5" />
-                <span><strong>Lithium-ion:</strong> 2 years or 32,000 km</span>
+                <span><strong>Lithium-ion (NMC):</strong> 2 years battery warranty + 1 year service warranty (32,000 km)</span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600 mt-0.5" />
-                <span><strong>Lead-acid:</strong> 1 year standard warranty</span>
+                <span><strong>Lithium-ion (LFP):</strong> 3 years battery warranty + 1 year service warranty (42,000 km)</span>
               </li>
             </ul>
           </CardContent>

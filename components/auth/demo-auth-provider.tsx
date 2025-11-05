@@ -1,9 +1,9 @@
 'use client'
 
 import * as React from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { User, Session } from '@supabase/supabase-js'
+import type { Session } from '@supabase/supabase-js'
 
 export type UserRole = 'customer' | 'dealer' | 'admin'
 
@@ -19,7 +19,6 @@ type AuthCtx = {
   session: Session | null
   loading: boolean
   login: (opts: { email: string; password: string; remember?: boolean }) => Promise<{ ok: boolean; error?: string }>
-  loginAs: (role: UserRole) => void
   logout: () => Promise<void>
   signup: (opts: { email: string; password: string; name: string; role?: UserRole; phone?: string; city?: string; pincode?: string }) => Promise<{ ok: boolean; error?: string }>
   resetPassword: (email: string) => Promise<{ ok: boolean; error?: string }>
@@ -29,19 +28,11 @@ type AuthCtx = {
 
 const AuthContext = React.createContext<AuthCtx | undefined>(undefined)
 
-const DEMO_CREDS: Record<UserRole, { email: string; password: string; name: string }> = {
-  customer: { email: 'customer@demo.com', password: 'demo123', name: 'Demo Customer' },
-  dealer: { email: 'dealer@demo.com', password: 'demo123', name: 'Demo Dealer' },
-  admin: { email: 'admin@demo.com', password: 'demo123', name: 'Demo Admin' },
-}
-
 export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const pathname = usePathname()
   const [user, setUser] = React.useState<DemoUser | null>(null)
   const [session, setSession] = React.useState<Session | null>(null)
   const [loading, setLoading] = React.useState(true)
-  const [isDemoMode, setIsDemoMode] = React.useState(false)
   
   const supabase = React.useMemo(() => createClient(), [])
 
@@ -50,17 +41,7 @@ export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true)
       
-      // Check if in demo mode first
-      const demoUser = localStorage.getItem('omni_demo_user')
-      if (demoUser) {
-        const parsedUser = JSON.parse(demoUser)
-        setUser(parsedUser)
-        setIsDemoMode(true)
-        setLoading(false)
-        return
-      }
-
-      // If not in demo mode, check Supabase session
+      // Check Supabase session
       const { data: { session: currentSession } } = await supabase.auth.getSession()
       setSession(currentSession)
       
@@ -80,7 +61,6 @@ export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         setUser(authUser)
-        setIsDemoMode(false)
       } else {
         setUser(null)
       }
@@ -98,13 +78,9 @@ export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
     refreshSession()
   }, [])
 
-  // Listen for auth state changes (only for Supabase)
+  // Listen for auth state changes
   React.useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Skip if in demo mode
-      const demoUser = localStorage.getItem('omni_demo_user')
-      if (demoUser) return
-      
       setSession(session)
       
       if (session?.user) {
@@ -123,7 +99,6 @@ export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         setUser(authUser)
-        setIsDemoMode(false)
       } else {
         setUser(null)
       }
@@ -137,24 +112,6 @@ export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase])
 
   const login = async ({ email, password, remember }: { email: string; password: string; remember?: boolean }) => {
-    // Check if it's a demo login
-    const matched = (Object.keys(DEMO_CREDS) as UserRole[]).find(
-      (r) => DEMO_CREDS[r].email === email && DEMO_CREDS[r].password === password
-    )
-    
-    if (matched) {
-      // Demo login
-      const u: DemoUser = { name: DEMO_CREDS[matched].name, email, role: matched }
-      setUser(u)
-      setIsDemoMode(true)
-      try {
-        if (remember) localStorage.setItem('omni_demo_user', JSON.stringify(u))
-        else localStorage.removeItem('omni_demo_user')
-      } catch {}
-      router.push(matched === 'admin' ? '/admin' : matched === 'dealer' ? '/dealer' : '/dashboard')
-      return { ok: true }
-    }
-
     // Real Supabase login
     try {
       const response = await fetch('/api/auth/login', {
@@ -168,10 +125,6 @@ export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok) {
         return { ok: false, error: data.error || 'Login failed' }
       }
-      
-      // Clear demo mode
-      setIsDemoMode(false)
-      localStorage.removeItem('omni_demo_user')
       
       // Refresh the session to get the latest user data
       await refreshSession()
@@ -188,32 +141,15 @@ export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const loginAs = (role: UserRole) => {
-    const { email, password, name } = DEMO_CREDS[role]
-    const u: DemoUser = { name, email, role }
-    setUser(u)
-    setIsDemoMode(true)
-    try {
-      localStorage.setItem('omni_demo_user', JSON.stringify(u))
-    } catch {}
-    router.push(role === 'admin' ? '/admin' : role === 'dealer' ? '/dealer' : '/dashboard')
-  }
-
   const logout = async () => {
     try {
-      // Clear demo mode
-      localStorage.removeItem('omni_demo_user')
-      
-      if (!isDemoMode) {
-        // Logout from Supabase
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-        })
-      }
+      // Logout from Supabase
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+      })
       
       setUser(null)
       setSession(null)
-      setIsDemoMode(false)
       router.push('/')
     } catch (error) {
       console.error('Logout error:', error)
@@ -296,7 +232,6 @@ export function DemoAuthProvider({ children }: { children: React.ReactNode }) {
     session,
     loading,
     login,
-    loginAs,
     logout,
     signup,
     resetPassword,

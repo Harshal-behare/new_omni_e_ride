@@ -92,7 +92,7 @@ export default function TermsPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-emerald-600 mt-0.5">•</span>
-                <span>Battery warranty is limited to 32,000 km or warranty period, whichever comes first</span>
+                <span>Battery warranty: NMC - 2 years + 1 year service (32,000 km) | LFP - 3 years + 1 year service (42,000 km)</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-emerald-600 mt-0.5">•</span>

@@ -60,7 +60,7 @@ export default function AboutPage() {
           />
           <FeatureCard 
             title="Advanced Battery Technology"
-            description="Durable lithium and LFP batteries with up to 3 years warranty"
+            description="NMC: 2 years + 1 year service (32,000 km) | LFP: 3 years + 1 year service (42,000 km)"
             icon="🔋"
           />
           <FeatureCard 

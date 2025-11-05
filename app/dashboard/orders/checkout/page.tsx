@@ -352,7 +352,7 @@ export default function CheckoutPage() {
             <div className="text-xs text-gray-600 space-y-1">
               <p>• Free delivery within city limits</p>
               <p>• 7-day return policy</p>
-              <p>• 2-year comprehensive warranty</p>
+              <p>• Battery warranty: NMC (2+1 years, 32,000 km) | LFP (3+1 years, 42,000 km)</p>
               <p>• Order confirmation will be sent via email</p>
             </div>
           </CardContent>

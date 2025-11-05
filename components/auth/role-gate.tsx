@@ -16,6 +16,14 @@ export function RoleGate({
   const { user, loading } = useDemoAuth()
   const router = useRouter()
   
+  // Check if user has required role - must be called before any conditional returns
+  React.useEffect(() => {
+    if (!loading && (!user || !allow.includes(user.role))) {
+      // Redirect unauthenticated users to home page
+      router.push('/')
+    }
+  }, [user, loading, allow, router])
+  
   // Show loading state while checking authentication
   if (loading) {
     return (
@@ -24,14 +32,6 @@ export function RoleGate({
       </div>
     )
   }
-  
-  // Check if user has required role
-  React.useEffect(() => {
-    if (!loading && (!user || !allow.includes(user.role))) {
-      // Redirect unauthenticated users to home page
-      router.push('/')
-    }
-  }, [user, loading, allow, router])
   
   // If no user or wrong role, show nothing (will redirect)
   if (!user || !allow.includes(user.role)) {

@@ -30,6 +30,32 @@ CREATE TABLE public.contact_inquiries (
   CONSTRAINT contact_inquiries_pkey PRIMARY KEY (id),
   CONSTRAINT contact_inquiries_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.profiles(id)
 );
+CREATE TABLE public.customer_feedback (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  user_id uuid,
+  name text NOT NULL,
+  email text,
+  location text NOT NULL,
+  rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  feedback_text text NOT NULL,
+  vehicle_purchased text,
+  vehicle_id uuid,
+  photo_url text,
+  verified boolean DEFAULT false,
+  status text DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'approved'::text, 'rejected'::text])),
+  display_on_homepage boolean DEFAULT false,
+  order_id uuid,
+  approved_by uuid,
+  approved_at timestamp with time zone,
+  rejection_reason text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT customer_feedback_pkey PRIMARY KEY (id),
+  CONSTRAINT customer_feedback_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+  CONSTRAINT customer_feedback_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehicles(id),
+  CONSTRAINT customer_feedback_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id),
+  CONSTRAINT customer_feedback_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES public.profiles(id)
+);
 CREATE TABLE public.dealer_applications (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   user_id uuid,
@@ -58,6 +84,7 @@ CREATE TABLE public.dealer_applications (
   updated_at timestamp with time zone DEFAULT now(),
   terms_accepted boolean NOT NULL DEFAULT false,
   terms_accepted_at timestamp with time zone,
+  google_maps_link text,
   CONSTRAINT dealer_applications_pkey PRIMARY KEY (id),
   CONSTRAINT dealer_applications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
   CONSTRAINT dealer_applications_reviewed_by_fkey FOREIGN KEY (reviewed_by) REFERENCES public.profiles(id)
@@ -91,8 +118,6 @@ CREATE TABLE public.dealers (
   city text NOT NULL,
   state text NOT NULL,
   pincode text NOT NULL,
-  latitude numeric,
-  longitude numeric,
   status USER-DEFINED DEFAULT 'pending'::dealer_status,
   commission_rate numeric DEFAULT 10.00,
   documents jsonb,
@@ -100,6 +125,7 @@ CREATE TABLE public.dealers (
   approved_by uuid,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
+  google_maps_link text,
   CONSTRAINT dealers_pkey PRIMARY KEY (id),
   CONSTRAINT dealers_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
   CONSTRAINT dealers_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES public.profiles(id)
@@ -136,8 +162,8 @@ CREATE TABLE public.leads (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT leads_pkey PRIMARY KEY (id),
-  CONSTRAINT leads_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.profiles(id),
   CONSTRAINT leads_vehicle_interested_fkey FOREIGN KEY (vehicle_interested) REFERENCES public.vehicles(id),
+  CONSTRAINT leads_assigned_to_fkey FOREIGN KEY (assigned_to) REFERENCES public.profiles(id),
   CONSTRAINT leads_dealer_id_fkey FOREIGN KEY (dealer_id) REFERENCES public.dealers(id)
 );
 CREATE TABLE public.notifications (
@@ -325,9 +351,9 @@ CREATE TABLE public.test_rides (
   ip_address inet,
   user_agent text,
   CONSTRAINT test_rides_pkey PRIMARY KEY (id),
-  CONSTRAINT test_rides_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehicles(id),
   CONSTRAINT test_rides_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
-  CONSTRAINT test_rides_dealer_id_fkey FOREIGN KEY (dealer_id) REFERENCES public.dealers(id)
+  CONSTRAINT test_rides_dealer_id_fkey FOREIGN KEY (dealer_id) REFERENCES public.dealers(id),
+  CONSTRAINT test_rides_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehicles(id)
 );
 CREATE TABLE public.vehicles (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -367,9 +393,9 @@ CREATE TABLE public.warranties (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   CONSTRAINT warranties_pkey PRIMARY KEY (id),
+  CONSTRAINT warranties_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id),
   CONSTRAINT warranties_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
-  CONSTRAINT warranties_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehicles(id),
-  CONSTRAINT warranties_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id)
+  CONSTRAINT warranties_vehicle_id_fkey FOREIGN KEY (vehicle_id) REFERENCES public.vehicles(id)
 );
 CREATE TABLE public.warranty_registrations (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),

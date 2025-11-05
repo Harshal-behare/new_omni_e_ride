@@ -30,7 +30,7 @@ export default function WhyChooseUs() {
     <section className="bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 py-14">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-gray-900">Why Choose OMNI E-RIDE?</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Why Choose OMNI E-RIDE?</h2>
           <p className="mt-2 text-gray-600">Leading the electric revolution with innovation and quality</p>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

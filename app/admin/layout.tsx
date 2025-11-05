@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { RoleGate } from '@/components/auth/role-gate'
 import { OmniButton } from '@/components/ui/omni-button'
-import { Home, Users, Shield, Building2, Package, ShoppingCart, ClipboardList, Menu, ChevronLeft, ChevronRight, UserCheck, LogOut } from 'lucide-react'
+import { Home, Users, Shield, Building2, Package, ShoppingCart, ClipboardList, Menu, ChevronLeft, ChevronRight, UserCheck, LogOut, MessageSquare } from 'lucide-react'
 import { useDemoAuth } from '@/components/auth/demo-auth-provider'
 import { cn } from '@/lib/utils'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -44,6 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/vehicles', icon: <Package className="h-5 w-5" />, label: 'Vehicles' },
     { href: '/admin/leads', icon: <UserCheck className="h-5 w-5" />, label: 'Leads' },
     { href: '/admin/orders', icon: <ShoppingCart className="h-5 w-5" />, label: 'Orders' },
+    { href: '/admin/customer-feedback', icon: <MessageSquare className="h-5 w-5" />, label: 'Customer Feedback' },
   ]
   return (
     <RoleGate allow={['admin']}>

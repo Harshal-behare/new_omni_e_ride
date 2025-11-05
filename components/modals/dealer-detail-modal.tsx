@@ -29,8 +29,7 @@ interface Dealer {
   city: string
   state: string
   pincode: string
-  latitude?: number
-  longitude?: number
+  google_maps_link?: string
   status: string
   commission_rate?: number
   approved_at?: string
@@ -68,8 +67,12 @@ export function DealerDetailModal({ dealer, open, onOpenChange }: DealerDetailMo
   }
 
   const handleGetDirections = () => {
-    const address = encodeURIComponent(dealer.business_address)
-    window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, '_blank')
+    if (dealer.google_maps_link) {
+      window.open(dealer.google_maps_link, '_blank')
+    } else {
+      const address = encodeURIComponent(dealer.business_address)
+      window.open(`https://www.google.com/maps/search/?api=1&query=${address}`, '_blank')
+    }
   }
 
   const handleCall = () => {

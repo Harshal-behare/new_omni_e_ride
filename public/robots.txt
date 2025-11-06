@@ -1,0 +1,25 @@
+# OMNI E-RIDE - Robots.txt
+# Allow all search engines to crawl the site
+
+User-agent: *
+Allow: /
+
+# Disallow admin, dashboard, and API routes from indexing
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /dealer/
+Disallow: /api/
+Disallow: /auth/
+
+# Allow public pages
+Allow: /
+Allow: /about
+Allow: /contact
+Allow: /models
+Allow: /dealers
+
+# Sitemap location
+Sitemap: https://omnieride.com/sitemap.xml
+
+# Crawl-delay for polite crawling
+Crawl-delay: 1

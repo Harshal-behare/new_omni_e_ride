@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { OmniButton } from "@/components/ui/omni-button"
 import { useAuth } from "@/hooks/use-auth"
+import { Home } from "lucide-react"
 
 type CustomerForm = {
   name: string
@@ -103,6 +104,13 @@ export default function SignupPage() {
       </div>
 
       <div className="p-8 md:p-12">
+        <Link 
+          href="/" 
+          className="inline-flex items-center gap-2 text-sm text-emerald-700 hover:text-emerald-800 mb-4 hover:underline"
+        >
+          <Home className="h-4 w-4" />
+          Back to Home
+        </Link>
         <h2 className="text-2xl font-bold">Create a Customer Account</h2>
         {testRideModel && (
           <p className="mt-2 text-sm text-emerald-700 font-medium">
@@ -146,10 +154,7 @@ export default function SignupPage() {
               />
             </Field>
           </div>
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input type="checkbox" className="accent-emerald-600" {...c.register("newsletter")} /> Subscribe to
-            newsletter
-          </label>
+         
           {error && (
             <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
               {error}

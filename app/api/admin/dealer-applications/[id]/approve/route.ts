@@ -28,7 +28,7 @@ export async function POST(
     // Get the application
     const { data: application, error: fetchError } = await supabase
       .from('dealer_applications')
-      .select('user_id, business_name, business_address, business_phone, business_email, gst_number, pan_number, city, state, pincode')
+      .select('user_id, business_name, business_address, business_phone, business_email, gst_number, pan_number, city, state, pincode, google_maps_link')
       .eq('id', id)
       .single()
 
@@ -74,6 +74,7 @@ export async function POST(
         city: application.city,
         state: application.state,
         pincode: application.pincode,
+        google_maps_link: application.google_maps_link,
         status: 'approved',
         approved_at: new Date().toISOString(),
         approved_by: user.id

@@ -37,7 +37,7 @@ export default function AboutPage() {
         </div>
         <div className="rounded-xl overflow-hidden ring-1 ring-gray-200">
           <img
-            src="/placeholder.svg?height=800&width=1200"
+            src="/images/Showroom.png?height=800&width=1200"
             alt="Omni E-Ride Showroom"
             className="w-full h-auto object-cover"
           />
@@ -60,7 +60,7 @@ export default function AboutPage() {
           />
           <FeatureCard 
             title="Advanced Battery Technology"
-            description="Durable lithium and LFP batteries with up to 3 years warranty"
+            description="NMC: 2 years + 1 year service (32,000 km) | LFP: 3 years + 1 year service (42,000 km)"
             icon="🔋"
           />
           <FeatureCard 

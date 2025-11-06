@@ -21,20 +21,13 @@ type Dealer = {
   city: string
   state: string
   pincode: string
-  latitude?: number
-  longitude?: number
+  google_maps_link?: string
   status: string
   commission_rate?: number
   approved_at?: string
   created_at: string
 }
 
-// Simple equirectangular projection to place markers within placeholder map bounds (not accurate; replace with Google Maps when available)
-function projectToBox(lat: number, lng: number, bounds = { minLat: 6, maxLat: 37, minLng: 68, maxLng: 97 }) {
-  const x = (lng - bounds.minLng) / (bounds.maxLng - bounds.minLng)
-  const y = 1 - (lat - bounds.minLat) / (bounds.maxLat - bounds.minLat)
-  return { x: Math.min(0.98, Math.max(0.02, x)), y: Math.min(0.98, Math.max(0.02, y)) }
-}
 
 export default function DealerLocations() {
   const [search, setSearch] = React.useState('')
@@ -86,7 +79,7 @@ export default function DealerLocations() {
         {/* Showroom Image */}
         <div className="relative lg:col-span-7 rounded-xl ring-1 ring-gray-200 overflow-hidden">
           <img
-            src="/placeholder.svg?height=700&width=1000"
+            src="/images/SaharaShowroom.png?height=700&width=1000"
             alt="Omni ElectraRide Showroom"
             className="h-full w-full object-cover"
           />
@@ -94,7 +87,7 @@ export default function DealerLocations() {
             <h3 className="text-white text-xl font-semibold mb-2">Omni ElectraRide Showroom</h3>
             <p className="text-white/90 text-sm mb-3">NH-107, Yadav Chowk, Saharsa, Bihar - 852201</p>
             <a 
-              href="https://www.google.com/maps/place/Omni+ElectraRide+Showroom/@25.8789055,86.6212866" 
+              href="https://maps.app.goo.gl/ZErZHqAFH44vJSEH6?g_st=ipc" 
               target="_blank" 
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition"
@@ -199,7 +192,12 @@ export default function DealerLocations() {
                           <a href={`tel:${d.business_phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-1 rounded-lg border px-2 py-1.5 text-xs">
                             <Phone className="h-3 w-3" /> Call
                           </a>
-                          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.business_address)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs text-white hover:bg-emerald-700">
+                          <a 
+                            href={d.google_maps_link || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.business_address)}`} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2 py-1.5 text-xs text-white hover:bg-emerald-700"
+                          >
                             <Navigation className="h-3 w-3" /> Directions
                           </a>
                           <Button
@@ -226,9 +224,9 @@ export default function DealerLocations() {
             </div>
           </div>
 
-          <p className="text-xs text-gray-500">
+          {/* <p className="text-xs text-gray-500">
             Map integration-ready: When Google Maps JS API is available on window.google.maps, replace the placeholder with a live map and synchronized markers.
-          </p>
+          </p> */}
         </div>
       </div>
 

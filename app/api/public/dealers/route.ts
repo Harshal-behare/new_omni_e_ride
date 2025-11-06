@@ -10,10 +10,11 @@ export async function GET(request: NextRequest) {
     const city = searchParams.get('city')
     const state = searchParams.get('state')
     
-    // Build query - fetch all dealers (no auth required for public view)
+    // Build query - fetch only approved dealers (no auth required for public view)
     let query = supabase
       .from('dealers')
       .select('*')
+      .eq('status', 'approved')
     
     // Apply filters
     if (city) {
@@ -45,8 +46,7 @@ export async function GET(request: NextRequest) {
       city: dealer.city || 'City not specified',
       state: dealer.state || 'State not specified',
       pincode: dealer.pincode || '',
-      latitude: dealer.latitude,
-      longitude: dealer.longitude,
+      google_maps_link: dealer.google_maps_link,
       status: dealer.status || 'pending',
       commission_rate: dealer.commission_rate,
       approved_at: dealer.approved_at,

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'react-hot-toast'
 import { 
   Plus, Edit, Trash2, Upload, X, Save, Car, IndianRupee,
-  Zap, Gauge, Battery, Clock, Search, Filter
+  Zap, Gauge, Battery, Clock, Search, Filter, FileEdit
 } from 'lucide-react'
 import Image from 'next/image'
 
@@ -46,6 +46,7 @@ export default function AdminVehiclesPage() {
   const [selectedVehicle, setSelectedVehicle] = React.useState<Vehicle | null>(null)
   const [editMode, setEditMode] = React.useState(false)
   const [showAddForm, setShowAddForm] = React.useState(false)
+  const [showDataEditModal, setShowDataEditModal] = React.useState(false)
   const [filters, setFilters] = React.useState({
     search: '',
     type: '',
@@ -79,8 +80,8 @@ export default function AdminVehiclesPage() {
       setLoading(true)
       const params = new URLSearchParams({
         ...(filters.search && { search: filters.search }),
-        ...(filters.type && { type: filters.type }),
-        ...(filters.status && { status: filters.status })
+        ...(filters.type && filters.type !== 'all' && { type: filters.type }),
+        ...(filters.status && filters.status !== 'all' && { status: filters.status })
       })
       
       const response = await fetch(`/api/admin/vehicles?${params}`)
@@ -141,6 +142,51 @@ export default function AdminVehiclesPage() {
     } catch (error) {
       console.error('Error saving vehicle:', error)
       toast.error('Failed to save vehicle')
+    }
+  }
+
+  const handleDataUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    try {
+      // Only send data fields, no images
+      const dataToUpdate = {
+        id: selectedVehicle?.id,
+        name: formData.name,
+        slug: formData.slug,
+        type: formData.type,
+        brand: formData.brand,
+        model: formData.model,
+        price: formData.price,
+        discounted_price: formData.discounted_price,
+        description: formData.description,
+        status: formData.status,
+        stock_quantity: formData.stock_quantity,
+        range_km: formData.range_km,
+        top_speed_kmph: formData.top_speed_kmph,
+        charging_time_hours: formData.charging_time_hours,
+        battery_capacity: formData.battery_capacity,
+        motor_power: formData.motor_power,
+        colors: formData.colors
+      }
+      
+      const response = await fetch('/api/admin/vehicles', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dataToUpdate)
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to update vehicle data')
+      }
+      
+      toast.success('Vehicle data updated successfully')
+      setShowDataEditModal(false)
+      setSelectedVehicle(null)
+      await fetchVehicles()
+    } catch (error) {
+      console.error('Error updating vehicle data:', error)
+      toast.error('Failed to update vehicle data')
     }
   }
 
@@ -245,14 +291,14 @@ export default function AdminVehiclesPage() {
             </div>
             
             <Select 
-              value={filters.type} 
+              value={filters.type || undefined} 
               onValueChange={(value) => setFilters({ ...filters, type: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="scooter">Scooter</SelectItem>
                 <SelectItem value="bike">Bike</SelectItem>
                 <SelectItem value="ebike">E-Bike</SelectItem>
@@ -260,14 +306,14 @@ export default function AdminVehiclesPage() {
             </Select>
             
             <Select 
-              value={filters.status} 
+              value={filters.status || undefined} 
               onValueChange={(value) => setFilters({ ...filters, status: value })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
@@ -335,12 +381,27 @@ export default function AdminVehiclesPage() {
                 <Button
                   size="sm"
                   variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setSelectedVehicle(vehicle)
+                    setFormData(vehicle)
+                    setShowDataEditModal(true)
+                  }}
+                  title="Edit vehicle data (no images)"
+                >
+                  <FileEdit className="h-4 w-4 mr-1" />
+                  Edit Data
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
                   onClick={() => {
                     setSelectedVehicle(vehicle)
                     setFormData(vehicle)
                     setEditMode(true)
                     setShowAddForm(true)
                   }}
+                  title="Edit all (including images)"
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -553,6 +614,257 @@ export default function AdminVehiclesPage() {
                   <Button type="submit">
                     <Save className="h-4 w-4 mr-2" />
                     {editMode ? 'Update' : 'Create'} Vehicle
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Data Edit Modal - No Images */}
+      {showDataEditModal && selectedVehicle && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <CardHeader className="border-b">
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Edit Vehicle Data</CardTitle>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Edit vehicle information (images are managed separately)
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setShowDataEditModal(false)
+                    setSelectedVehicle(null)
+                  }}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <form onSubmit={handleDataUpdate} className="space-y-6">
+                {/* Basic Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="data-name">Vehicle Name *</Label>
+                      <Input
+                        id="data-name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                        placeholder="e.g., Omni X Pro"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="data-slug">Slug</Label>
+                      <Input
+                        id="data-slug"
+                        value={formData.slug}
+                        onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                        placeholder="e.g., omni-x-pro"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">URL-friendly identifier</p>
+                    </div>
+                    <div>
+                      <Label htmlFor="data-type">Type *</Label>
+                      <Select
+                        value={formData.type}
+                        onValueChange={(value) => setFormData({ ...formData, type: value as any })}
+                      >
+                        <SelectTrigger id="data-type">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="scooter">Scooter</SelectItem>
+                          <SelectItem value="bike">Bike</SelectItem>
+                          <SelectItem value="ebike">E-Bike</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="data-status">Status *</Label>
+                      <Select
+                        value={formData.status}
+                        onValueChange={(value) => setFormData({ ...formData, status: value as any })}
+                      >
+                        <SelectTrigger id="data-status">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                          <SelectItem value="draft">Draft</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="data-brand">Brand *</Label>
+                      <Input
+                        id="data-brand"
+                        value={formData.brand}
+                        onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                        required
+                        placeholder="e.g., Omni"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="data-model">Model *</Label>
+                      <Input
+                        id="data-model"
+                        value={formData.model}
+                        onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                        required
+                        placeholder="e.g., X Pro"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pricing & Stock */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Pricing & Inventory</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="data-price">Price (₹) *</Label>
+                      <Input
+                        id="data-price"
+                        type="number"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: parseInt(e.target.value) || 0 })}
+                        required
+                        placeholder="125000"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="data-discounted-price">Discounted Price (₹)</Label>
+                      <Input
+                        id="data-discounted-price"
+                        type="number"
+                        value={formData.discounted_price || ''}
+                        onChange={(e) => setFormData({ ...formData, discounted_price: parseInt(e.target.value) || undefined })}
+                        placeholder="110000"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="data-stock">Stock Quantity *</Label>
+                      <Input
+                        id="data-stock"
+                        type="number"
+                        value={formData.stock_quantity}
+                        onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
+                        required
+                        placeholder="50"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Technical Specifications */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Technical Specifications</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="data-range">Range (km)</Label>
+                      <Input
+                        id="data-range"
+                        type="number"
+                        value={formData.range_km || ''}
+                        onChange={(e) => setFormData({ ...formData, range_km: parseInt(e.target.value) || undefined })}
+                        placeholder="180"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="data-speed">Top Speed (km/h)</Label>
+                      <Input
+                        id="data-speed"
+                        type="number"
+                        value={formData.top_speed_kmph || ''}
+                        onChange={(e) => setFormData({ ...formData, top_speed_kmph: parseInt(e.target.value) || undefined })}
+                        placeholder="75"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="data-battery">Battery Capacity</Label>
+                      <Input
+                        id="data-battery"
+                        value={formData.battery_capacity || ''}
+                        onChange={(e) => setFormData({ ...formData, battery_capacity: e.target.value })}
+                        placeholder="e.g., 3.2 kWh"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="data-charging">Charging Time (hours)</Label>
+                      <Input
+                        id="data-charging"
+                        type="number"
+                        step="0.5"
+                        value={formData.charging_time_hours || ''}
+                        onChange={(e) => setFormData({ ...formData, charging_time_hours: parseFloat(e.target.value) || undefined })}
+                        placeholder="4.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="data-motor">Motor Power</Label>
+                      <Input
+                        id="data-motor"
+                        value={formData.motor_power || ''}
+                        onChange={(e) => setFormData({ ...formData, motor_power: e.target.value })}
+                        placeholder="e.g., 2000W"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="data-colors">Available Colors</Label>
+                      <Input
+                        id="data-colors"
+                        value={formData.colors?.join(', ') || ''}
+                        onChange={(e) => setFormData({ 
+                          ...formData, 
+                          colors: e.target.value.split(',').map(c => c.trim()).filter(Boolean) 
+                        })}
+                        placeholder="Red, Blue, Black"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Comma-separated values</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Description</h3>
+                  <div>
+                    <Label htmlFor="data-description">Vehicle Description</Label>
+                    <Textarea
+                      id="data-description"
+                      value={formData.description || ''}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      rows={5}
+                      placeholder="Enter detailed description of the vehicle..."
+                    />
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowDataEditModal(false)
+                      setSelectedVehicle(null)
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
+                    <Save className="h-4 w-4 mr-2" />
+                    Update Vehicle Data
                   </Button>
                 </div>
               </form>

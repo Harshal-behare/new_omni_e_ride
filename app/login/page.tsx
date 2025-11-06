@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { OmniButton } from '@/components/ui/omni-button'
 import { useDemoAuth } from '@/components/auth/demo-auth-provider'
-import { Eye, EyeOff, ShieldCheck, Users, MapPin } from 'lucide-react'
+import { Eye, EyeOff, ShieldCheck, Users, MapPin, Home } from 'lucide-react'
 
 type FormVals = { email: string; password: string; remember: boolean }
 
@@ -42,6 +42,13 @@ export default function LoginPage() {
       {/* Form side */}
       <div className="p-8 md:p-12 flex items-center justify-center">
         <div className="w-full max-w-md">
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-2 text-sm text-emerald-700 hover:text-emerald-800 mb-4 hover:underline"
+          >
+            <Home className="h-4 w-4" />
+            Back to Home
+          </Link>
           <h2 className="text-2xl font-bold">Sign In to Your Account</h2>
           <p className="mt-2 text-sm text-gray-600">Welcome back! Please enter your credentials to continue.</p>
 
@@ -76,9 +83,7 @@ export default function LoginPage() {
               {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
             </div>
             <div className="flex items-center justify-between">
-              <label className="inline-flex items-center gap-2 text-sm">
-                <input type="checkbox" className="accent-emerald-600" {...register('remember')} /> Remember me
-              </label>
+              
               <Link className="text-sm text-emerald-700 hover:underline" href="/forgot-password">Forgot Password?</Link>
             </div>
             {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}

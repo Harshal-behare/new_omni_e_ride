@@ -34,9 +34,9 @@ export default function WarrantyInfo({ className, compact }: WarrantyInfoProps) 
       <div className={cn('grid gap-4', compact ? 'md:grid-cols-2' : 'md:grid-cols-3')}>
         <Card icon={<BadgeCheck className="h-5 w-5 text-emerald-600" />} title="Battery">
           <ul className="mt-2 space-y-1 text-sm text-gray-700">
-            <li>• 2-year or 32,000 km (whichever comes first)</li>
+            <li>• Lithium-ion (NMC): 2 years + 1 year service (32,000 km)</li>
+            <li>• Lithium-ion (LFP): 3 years + 1 year service (42,000 km)</li>
             <li>• 1-time replacement if defective</li>
-            <li>• 3rd year service only (parts chargeable)</li>
           </ul>
         </Card>
         <Card icon={<BadgeCheck className="h-5 w-5 text-emerald-600" />} title="Motor & Electronics">

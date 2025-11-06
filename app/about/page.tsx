@@ -37,7 +37,7 @@ export default function AboutPage() {
         </div>
         <div className="rounded-xl overflow-hidden ring-1 ring-gray-200">
           <img
-            src="/placeholder.svg?height=800&width=1200"
+            src="/images/Showroom.png?height=800&width=1200"
             alt="Omni E-Ride Showroom"
             className="w-full h-auto object-cover"
           />

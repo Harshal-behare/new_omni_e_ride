@@ -16,9 +16,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check admin role using admin client
-    const adminClient = createAdminClient()
-    const { data: profile } = await adminClient
+    // Check admin role
+    const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -31,6 +30,7 @@ export async function DELETE(
     const { id } = await params
 
     // Delete feedback using admin client
+    const adminClient = createAdminClient()
     const { error } = await adminClient
       .from('customer_feedback')
       .delete()

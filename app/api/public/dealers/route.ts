@@ -10,10 +10,11 @@ export async function GET(request: NextRequest) {
     const city = searchParams.get('city')
     const state = searchParams.get('state')
     
-    // Build query - fetch all dealers (no auth required for public view)
+    // Build query - fetch only approved dealers (no auth required for public view)
     let query = supabase
       .from('dealers')
       .select('*')
+      .eq('status', 'approved')
     
     // Apply filters
     if (city) {

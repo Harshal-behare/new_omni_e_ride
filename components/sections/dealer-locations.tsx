@@ -79,7 +79,7 @@ export default function DealerLocations() {
         {/* Showroom Image */}
         <div className="relative lg:col-span-7 rounded-xl ring-1 ring-gray-200 overflow-hidden">
           <img
-            src="/images/HeadOfficeLocation.png?height=700&width=1000"
+            src="/images/SaharaShowroom.png?height=700&width=1000"
             alt="Omni ElectraRide Showroom"
             className="h-full w-full object-cover"
           />

@@ -154,10 +154,7 @@ export default function SignupPage() {
               />
             </Field>
           </div>
-          <label className="inline-flex items-center gap-2 text-sm">
-            <input type="checkbox" className="accent-emerald-600" {...c.register("newsletter")} /> Subscribe to
-            newsletter
-          </label>
+         
           {error && (
             <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
               {error}

@@ -59,7 +59,7 @@ pnpm run email:dev
 
 ```bash
 # Copy environment variables
-cp .env.example .env.local
+cp .env.example .env
 
 # Edit .env.local with your Supabase and service credentials
 ```

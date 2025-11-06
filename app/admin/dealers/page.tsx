@@ -23,7 +23,12 @@ export interface Dealer {
   pincode: string
   status: string
   commission_rate: number
+  google_maps_link?: string
   created_at: string
+  approved_at?: string
+  approved_by?: string
+  updated_at?: string
+  documents?: any
   user: {
     id: string
     name: string

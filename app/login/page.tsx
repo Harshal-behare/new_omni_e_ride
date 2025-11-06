@@ -83,9 +83,7 @@ export default function LoginPage() {
               {errors.password && <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>}
             </div>
             <div className="flex items-center justify-between">
-              <label className="inline-flex items-center gap-2 text-sm">
-                <input type="checkbox" className="accent-emerald-600" {...register('remember')} /> Remember me
-              </label>
+              
               <Link className="text-sm text-emerald-700 hover:underline" href="/forgot-password">Forgot Password?</Link>
             </div>
             {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}

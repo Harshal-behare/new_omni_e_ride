@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -25,7 +25,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
-    const dealerId = params.id
+    const { id: dealerId } = await params
     const body = await request.json()
 
     // Extract and validate the fields that can be updated
@@ -41,6 +41,8 @@ export async function PUT(
       pan_number,
       status,
       commission_rate,
+      google_maps_link,
+      user_id,
     } = body
 
     // Update dealer
@@ -58,6 +60,8 @@ export async function PUT(
         pan_number,
         status,
         commission_rate: parseFloat(commission_rate),
+        google_maps_link,
+        user_id,
         updated_at: new Date().toISOString(),
       })
       .eq('id', dealerId)
@@ -81,7 +85,7 @@ export async function PUT(
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient()
@@ -103,7 +107,7 @@ export async function GET(
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
-    const dealerId = params.id
+    const { id: dealerId } = await params
 
     // Fetch dealer with user info
     const { data: dealer, error } = await supabase

@@ -32,6 +32,8 @@ export function EditDealerModal({ dealer, open, onOpenChange, onUpdate }: EditDe
     pan_number: '',
     status: 'pending',
     commission_rate: 0,
+    google_maps_link: '',
+    user_id: '',
   })
 
   React.useEffect(() => {
@@ -48,6 +50,8 @@ export function EditDealerModal({ dealer, open, onOpenChange, onUpdate }: EditDe
         pan_number: dealer.pan_number || '',
         status: dealer.status || 'pending',
         commission_rate: dealer.commission_rate || 0,
+        google_maps_link: dealer.google_maps_link || '',
+        user_id: dealer.user_id || '',
       })
     }
   }, [dealer])
@@ -255,6 +259,47 @@ export function EditDealerModal({ dealer, open, onOpenChange, onUpdate }: EditDe
                     value={formData.commission_rate}
                     onChange={(e) => handleChange('commission_rate', parseFloat(e.target.value))}
                     required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Google Maps Link */}
+            <div>
+              <h3 className="text-sm font-semibold mb-3 text-gray-700">Location Link</h3>
+              <div>
+                <Label htmlFor="google_maps_link">Google Maps Link</Label>
+                <Input
+                  id="google_maps_link"
+                  type="url"
+                  placeholder="https://maps.google.com/..."
+                  value={formData.google_maps_link}
+                  onChange={(e) => handleChange('google_maps_link', e.target.value)}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Enter the Google Maps URL for this dealer's location
+                </p>
+              </div>
+            </div>
+
+            {/* User ID (Read-only) */}
+            <div>
+              <h3 className="text-sm font-semibold mb-3 text-gray-700">System Information</h3>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label className="text-xs text-gray-600">User ID</Label>
+                  <Input
+                    value={formData.user_id}
+                    disabled
+                    className="bg-gray-50 text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs text-gray-600">Dealer ID</Label>
+                  <Input
+                    value={dealer?.id || ''}
+                    disabled
+                    className="bg-gray-50 text-xs font-mono"
                   />
                 </div>
               </div>

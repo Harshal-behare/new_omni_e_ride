@@ -47,7 +47,7 @@ export default function SiteFooter() {
                   rel="noopener noreferrer"
                   className="hover:underline leading-relaxed"
                 >
-                  Pillar number 163, Pahari, Near Bairiya Bus stand, Patna,
+                  Pillar number 163, Pahari, <br></br>Near Bairiya Bus stand, Patna,<br></br>
                   Bihar – 800030
                 </a>
               </address>
@@ -58,7 +58,7 @@ export default function SiteFooter() {
                   href="tel:01169268712"
                   className="text-emerald-400 hover:underline"
                 >
-                  011-6926-8712
+                 +91 74628 58529
                 </a>
               </div>
               <div>

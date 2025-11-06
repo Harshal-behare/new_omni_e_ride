@@ -16,9 +16,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check admin role using admin client
-    const adminClient = createAdminClient()
-    const { data: profile } = await adminClient
+    // Check admin role
+    const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -37,6 +36,7 @@ export async function PUT(
     }
 
     // Update homepage display setting using admin client
+    const adminClient = createAdminClient()
     const { data: updatedFeedback, error } = await adminClient
       .from('customer_feedback')
       .update({ display_on_homepage })

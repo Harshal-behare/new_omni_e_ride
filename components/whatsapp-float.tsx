@@ -1,7 +1,7 @@
 'use client'
 
 export default function WhatsAppFloat() {
-  const whatsappNumber = '911169268712' // Using the support number without dashes
+  const whatsappNumber = '74628 58529' // Using the support number without dashes
   const defaultMessage = 'Hi, I am interested in OMNI E-RIDE electric scooters.'
   
   const handleClick = () => {

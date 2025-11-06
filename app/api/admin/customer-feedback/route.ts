@@ -27,9 +27,8 @@ export async function GET() {
       }, { status: 401 })
     }
 
-    // Check admin role using admin client
-    const adminClient = createAdminClient()
-    const { data: profile, error: profileError } = await adminClient
+    // Check admin role using regular client first
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -52,6 +51,7 @@ export async function GET() {
     }
 
     // Fetch all feedback using admin client to bypass RLS
+    const adminClient = createAdminClient()
     const { data: feedbacks, error } = await adminClient
       .from('customer_feedback')
       .select('*')
@@ -88,9 +88,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check admin role using admin client
-    const adminClient = createAdminClient()
-    const { data: profile } = await adminClient
+    // Check admin role using regular client first
+    const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -99,6 +98,9 @@ export async function POST(request: NextRequest) {
     if (profile?.role !== 'admin') {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
+
+    // Use admin client for database operations
+    const adminClient = createAdminClient()
 
     const body = await request.json()
     const {

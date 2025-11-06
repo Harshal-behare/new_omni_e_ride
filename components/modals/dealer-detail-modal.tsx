@@ -199,12 +199,12 @@ export function DealerDetailModal({ dealer, open, onOpenChange }: DealerDetailMo
                   <span className="text-sm text-gray-600">Commission Rate</span>
                   <span className="font-medium">{dealer.commission_rate}%</span>
                 </div>
-                {dealer.approved_at && (
+                {/* {dealer.approved_at && (
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-sm text-gray-600">Approved On</span>
                     <span className="font-medium">{formatDate(dealer.approved_at)}</span>
                   </div>
-                )}
+                )} */}
               </div>
             </div>
           )}
@@ -235,14 +235,11 @@ export function DealerDetailModal({ dealer, open, onOpenChange }: DealerDetailMo
               <Calendar className="h-4 w-4 mr-2" />
               Book Test Ride
             </Button>
-            <Button variant="ghost" size="sm" className="text-emerald-600">
-              <Globe className="h-4 w-4 mr-2" />
-              View Inventory
-            </Button>
+          
           </div>
 
           <div className="text-xs text-gray-500 pt-2 border-t">
-            <p>Dealer ID: {dealer.id}</p>
+    
             <p>For any issues with this dealer, please contact our support team.</p>
           </div>
         </div>

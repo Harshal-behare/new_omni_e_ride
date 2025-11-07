@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { RoleGate } from '@/components/auth/role-gate'
 import { OmniButton } from '@/components/ui/omni-button'
 import { UserAvatar } from '@/components/ui/user-avatar'
-import { Home, Calendar, ShoppingBag, User, Bell, LifeBuoy, Menu, ChevronLeft, ChevronRight, Shield, LogOut, Car, Briefcase } from 'lucide-react'
+import { Home, Calendar, ShoppingBag, User, LifeBuoy, Menu, ChevronLeft, ChevronRight, Shield, LogOut, Car, Briefcase } from 'lucide-react'
 import { useDemoAuth } from '@/components/auth/demo-auth-provider'
 import { cn } from '@/lib/utils'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
@@ -48,7 +48,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { href: '/dashboard/dealer-application', icon: <Briefcase className="h-5 w-5" />, label: 'Become Dealer' },
     { href: '/dashboard/warranty', icon: <Shield className="h-5 w-5" />, label: 'Warranty' },
     { href: '/dashboard/profile', icon: <User className="h-5 w-5" />, label: 'Profile' },
-    { href: '/dashboard/notifications', icon: <Bell className="h-5 w-5" />, label: 'Notifications' },
     { href: '/dashboard/support', icon: <LifeBuoy className="h-5 w-5" />, label: 'Support' },
   ]
 

@@ -20,7 +20,6 @@ export function DashboardShell({ role, children }: { role: 'customer' | 'dealer'
       { href: '/dashboard/test-rides', label: 'Test Rides' },
       { href: '/dashboard/orders', label: 'My Orders' },
       { href: '/dashboard/profile', label: 'Profile' },
-      { href: '/dashboard/notifications', label: 'Notifications' },
       { href: '/dashboard/support', label: 'Support' },
     ],
     dealer: [
